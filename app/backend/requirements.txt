@@ -1,0 +1,10 @@
+requests
+numpy
+pandas
+matplotlib
+scikit-learn
+pypdf
+fastapi
+uvicorn
+python-docx
+openpyxl

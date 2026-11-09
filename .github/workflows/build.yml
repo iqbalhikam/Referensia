@@ -1,0 +1,59 @@
+name: Build Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Pasang dependensi frontend
+        working-directory: app
+        run: npm ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pasang dependensi backend
+        run: |
+          pip install -r app/backend/requirements.txt pyinstaller
+          # tauri CLI butuh Windows SDK/MSVC — sudah ada di runner windows-latest
+
+      - name: Bangun sidecar Python (PyInstaller)
+        working-directory: app/backend
+        run: |
+          pyinstaller --noconfirm --onefile --name referensia-server \
+            --collect-submodules sklearn --collect-all docx --collect-all openpyxl server.py
+          mkdir -p ../src-tauri/binaries
+          cp dist/referensia-server.exe ../src-tauri/binaries/referensia-server-x86_64-pc-windows-msvc.exe
+
+      - name: Bangun installer NSIS
+        working-directory: app
+        run: npx tauri build --bundles nsis
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Referensia-Setup
+          path: app/src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+      - name: Terbitkan sebagai Release (hanya bila push tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/src-tauri/target/release/bundle/nsis/*.exe
+          generate_release_notes: true

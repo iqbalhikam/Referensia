@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="512" height="512">
+  <title>Refrensia</title>
+  <rect width="120" height="120" rx="28" fill="#4F46E5"/>
+  <path d="M30 22H68Q74 22 74 28V80L49 65L24 80V28Q24 22 30 22Z" fill="#FFFFFF"/>
+  <rect x="34" y="36" width="30" height="5" rx="2.5" fill="#C7D2FE"/>
+  <rect x="34" y="48" width="20" height="5" rx="2.5" fill="#C7D2FE"/>
+  <circle cx="80" cy="74" r="21" fill="#4F46E5" stroke="#FBBF24" stroke-width="7"/>
+  <line x1="95" y1="89" x2="108" y2="102" stroke="#FBBF24" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="80" cy="74" r="5" fill="#FFFFFF"/>
+</svg>

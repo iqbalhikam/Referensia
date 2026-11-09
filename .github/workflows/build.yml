@@ -8,6 +8,8 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    permissions:
+      contents: write   # perlu untuk menerbitkan Release dari tag
     defaults:
       run:
         shell: bash

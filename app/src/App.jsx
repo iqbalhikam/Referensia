@@ -6,7 +6,11 @@ import ResultView from "./components/ResultView.jsx";
 import LibraryView from "./components/LibraryView.jsx";
 import AnalysisView from "./components/AnalysisView.jsx";
 import { Welcome, LogoMark } from "./components/Brand.jsx";
-import { startSearch, getJob, health, libraryEntry, downloadUrl, libraryDownloadUrl } from "./api.js";
+import { KonsenPembaruan, SpandukPembaruan, PengaturanPembaruan } from "./components/Update.jsx";
+import { startSearch, getJob, health, libraryEntry, downloadUrl, libraryDownloadUrl, cekUpdate } from "./api.js";
+
+const KUNCI_AUTO = "referensia-auto-update";
+const KUNCI_TUNDA = "referensia-tunda-pembaruan";
 
 export default function App() {
   const [view, setView] = useState("form");
@@ -24,8 +28,36 @@ export default function App() {
   const [initialNotes, setInitialNotes] = useState({});
   const [zipHref, setZipHref] = useState("");
   const [tema, setTema] = useState(() => localStorage.getItem("referensia-tema") || "dark");
+  const [auto, setAuto] = useState(() => {
+    const simpan = localStorage.getItem(KUNCI_AUTO);
+    return simpan === null ? null : simpan === "1";
+  });
+  const [rilis, setRilis] = useState(null);
+  const [galatRilis, setGalatRilis] = useState("");
+  const [lagiCek, setLagiCek] = useState(false);
+  const [bukaPengaturan, setBukaPengaturan] = useState(false);
+  const [spandukTutup, setSpandukTutup] = useState(false);
   const cursor = useRef(0);
   const selesaiSplash = useCallback(() => setSplash(false), []);
+
+  const periksa = useCallback(async (paksa = false) => {
+    setLagiCek(true);
+    try {
+      setRilis(await cekUpdate(paksa));
+      setGalatRilis("");
+    } catch (e) {
+      setGalatRilis(e.message);
+    } finally {
+      setLagiCek(false);
+    }
+  }, []);
+
+  function pilihAuto(nyalakan) {
+    localStorage.setItem(KUNCI_AUTO, nyalakan ? "1" : "0");
+    setAuto(nyalakan);
+    setSpandukTutup(false);
+    if (nyalakan) periksa(true);
+  }
 
   useEffect(() => {
     document.documentElement.dataset.theme = tema;
@@ -35,6 +67,14 @@ export default function App() {
   useEffect(() => {
     health().then(() => setBackendOk(true)).catch(() => setBackendOk(false));
   }, []);
+
+  // Pemeriksaan senyap saat aplikasi dibuka — hanya bila pengguna mengizinkan
+  // dan spanduk sebelumnya tidak sedang ditunda ("Nanti dulu").
+  useEffect(() => {
+    if (backendOk !== true || auto !== true) return;
+    if (Number(localStorage.getItem(KUNCI_TUNDA) || 0) > Date.now()) return;
+    periksa(false);
+  }, [backendOk, auto, periksa]);
 
   useEffect(() => {
     if (view !== "progress" || !jobId) return;
@@ -121,6 +161,16 @@ export default function App() {
           ⚠️ Backend Python belum terdeteksi di port 8756 — jalankan dulu servernya (lihat panduan).
         </div>
       )}
+      {rilis?.ada_baru && !spandukTutup && (
+        <SpandukPembaruan
+          data={rilis}
+          onNanti={() => {
+            localStorage.setItem(KUNCI_TUNDA, String(Date.now() + 86400000));
+            setSpandukTutup(true);
+          }}
+          onPengaturan={() => setBukaPengaturan(true)}
+        />
+      )}
       <header className="sticky top-0 z-40 backdrop-blur-md bg-bg/70 border-b border-line/60">
         <div className="max-w-6xl mx-auto px-5 h-14 flex items-center">
           <div className="flex items-center gap-2.5">
@@ -147,6 +197,14 @@ export default function App() {
               }`}
             >
               📚 Pustaka
+            </button>
+            <button
+              onClick={() => setBukaPengaturan(true)}
+              title="Pengaturan pembaruan"
+              className="relative ml-1 w-8 h-8 grid place-items-center rounded-lg text-abu hover:text-teks border border-line/60 transition-colors"
+            >
+              ⚙️
+              {rilis?.ada_baru && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber" />}
             </button>
             <button
               onClick={() => setTema(tema === "dark" ? "light" : "dark")}
@@ -190,6 +248,15 @@ export default function App() {
         )}
         {view === "library" && (
           <LibraryView key="library" onOpen={bukaPustaka} onBack={reset} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {auto === null && !splash && <KonsenPembaruan key="konsen" onPilih={pilihAuto} />}
+        {bukaPengaturan && (
+          <PengaturanPembaruan
+            key="pengaturan" auto={auto} onAuto={pilihAuto} data={rilis} galat={galatRilis}
+            sibuk={lagiCek} onPeriksa={() => periksa(true)} onClose={() => setBukaPengaturan(false)}
+          />
         )}
       </AnimatePresence>
     </div>

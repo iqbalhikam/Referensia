@@ -27,11 +27,16 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from referensia import jalankan_referensia
+from referensia import pembaruan
 from referensia.engine import (buat_docx, buat_laporan_docx, buat_matriks_docx, buat_matriks_xlsx,
                                buat_markdown, buat_ris, statistik_tren, zotero_item)
 
 PORT_DEFAULT = 8756
 PUSTAKA_FILE: Path | None = None
+VERSI_APP = "1.0.0"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
+VERSI_API = "1.4"          # penanda build backend — untuk memastikan server tidak kedaluwarsa
+REPO_RILIS = os.environ.get("REFERENSIA_REPO", pembaruan.REPO_DEFAULT)
+UMUR_CACHE_RILIS = 6 * 3600
 
 app = FastAPI(title="Referensia Desktop API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -211,7 +216,7 @@ def _jalankan_job(job: Job):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "app": "Referensia Desktop", "versi": "1.4"}
+    return {"ok": True, "app": "Referensia Desktop", "versi": VERSI_APP, "api": VERSI_API}
 
 
 @app.post("/api/search")
@@ -818,6 +823,71 @@ def asisten_ai(p: AIParams):
     return {"ok": True, "teks": teks, "model": p.model.strip()}
 
 
+# ============================ pembaruan aplikasi ============================
+_LOCK_RILIS = threading.Lock()
+_CACHE_RILIS: dict = {"data": None, "kapan": 0.0, "galat": ""}
+
+
+def _ambil_rilis(paksa: bool = False):
+    """Rilis terbaru dari GitHub, dicache enam jam supaya tidak kena rate limit."""
+    with _LOCK_RILIS:
+        daluwarsa = time.time() - _CACHE_RILIS["kapan"] > UMUR_CACHE_RILIS
+        if paksa or _CACHE_RILIS["data"] is None or daluwarsa:
+            try:
+                _CACHE_RILIS["data"] = pembaruan.rilis_terbaru(REPO_RILIS)
+                _CACHE_RILIS["galat"] = ""
+            except (ValueError, requests.RequestException) as ex:
+                _CACHE_RILIS["galat"] = str(ex)
+            _CACHE_RILIS["kapan"] = time.time()
+        return _CACHE_RILIS["data"]
+
+
+@app.get("/api/update/check")
+def cek_update(paksa: bool = False):
+    r = _ambil_rilis(paksa)
+    if r is None:
+        raise HTTPException(502, _CACHE_RILIS["galat"] or "Gagal memeriksa rilis.")
+    return {"ok": True, "repo": REPO_RILIS, "versi_sekarang": VERSI_APP,
+            "ada_baru": pembaruan.lebih_baru(r["versi"], VERSI_APP), "rilis": r,
+            "galat": _CACHE_RILIS["galat"], "diperiksa_pada": _CACHE_RILIS["kapan"]}
+
+
+class UnduhPembaruanParams(BaseModel):
+    url: str
+
+
+@app.post("/api/update/download")
+def unduh_pembaruan(p: UnduhPembaruanParams):
+    # Hanya terima tautan yang memang terdaftar di rilis terakhir — bukan URL sembarang.
+    aset = next((a for a in ((_CACHE_RILIS["data"] or {}).get("aset") or []) if a["unduh"] == p.url), None)
+    if aset is None:
+        raise HTTPException(400, "Tautan unduhan tidak dikenali sebagai aset rilis Referensia.")
+    try:
+        info = pembaruan.unduh_installer(aset["unduh"], Path.cwd() / "pembaruan", aset["nama"])
+    except ValueError as ex:
+        raise HTTPException(400, str(ex))
+    except requests.RequestException as ex:
+        raise HTTPException(502, f"Unduhan gagal: {ex}")
+    return {"ok": True, **info}
+
+
+class PasangPembaruanParams(BaseModel):
+    lokasi: str
+
+
+@app.post("/api/update/install")
+def pasang_pembaruan(p: PasangPembaruanParams):
+    folder = (Path.cwd() / "pembaruan").resolve()
+    lokasi = Path(p.lokasi)
+    if lokasi.parent.resolve() != folder:
+        raise HTTPException(400, "Penginstal harus berada di folder pembaruan Referensia.")
+    try:
+        pembaruan.jadwalkan_pasang(lokasi)
+    except ValueError as ex:
+        raise HTTPException(400, str(ex))
+    return {"ok": True, "pesan": "Penginstal berjalan otomatis begitu Referensia ditutup."}
+
+
 def _cari_dir_ui(hibah: str) -> Path | None:
     """Cari hasil `npm run build` (index.html) — urutan: --ui, env, app/dist."""
     for calon in (hibah, os.environ.get("REFERENSIA_UI", ""),
@@ -845,7 +915,14 @@ def main():
     parser.add_argument("--ui", default="", help="folder hasil npm run build (default: deteksi otomatis app/dist)")
     parser.add_argument("--no-ui", action="store_true", help="hanya sediakan API, tanpa halaman web")
     parser.add_argument("--open", action="store_true", help="buka browser setelah server siap")
+    parser.add_argument("--pasang-setelah-tutup", default="",
+                        help="(internal) tunggu aplikasi tertutup lalu jalankan penginstal ini")
+    parser.add_argument("--aplikasi", default=pembaruan.NAMA_APLIKASI,
+                        help="(internal) nama proses yang ditunggu pengawas pembaruan")
     args = parser.parse_args()
+
+    if args.pasang_setelah_tutup:   # proses pengawas — jangan mulai server
+        raise SystemExit(pembaruan.pasang_setelah_tutup(args.pasang_setelah_tutup, args.aplikasi))
 
     # Hasil (folder Referensia_hasil + ZIP) ditulis relatif terhadap cwd mesin.
     dasar = Path(args.output) if args.output else Path.home() / "Documents" / "Referensia"

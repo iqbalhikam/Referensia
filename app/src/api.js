@@ -86,3 +86,9 @@ export async function jaringanSitasi(src) {
 }
 
 export const asistenAI = (data) => postJson("/ai", data);
+
+export async function cekUpdate(paksa = false) {
+  return cek(await fetch(`${BASE}/update/check${paksa ? "?paksa=1" : ""}`));
+}
+export const unduhPembaruan = (url) => postJson("/update/download", { url });
+export const pasangPembaruan = (lokasi) => postJson("/update/install", { lokasi });

@@ -51,7 +51,24 @@ Hasilnya: artifact `Referensia-Setup` (dan Release bila di-trigger lewat tag) be
 Build lokal (kalo memang mau): perlu Rust + Visual Studio C++ Build Tools + WebView2, lalu
 `cd app && npx tauri build --bundles nsis`.
 
-## 3. Pengembangan
+> Rilis harus **publish** (repositori publik atau rilis ditandai publik) supaya
+> `api.github.com/repos/.../releases/latest` bisa dibaca tanpa token. Selama repository privat,
+> pemeriksaan pembaruan balasannya “belum ada rilis publik” — fitur lain tetap jalan.
+
+## 3. Pembaruan otomatis
+
+- Pertama kali aplikasi dibuka, pengguna ditanya: **aktifkan atau nonaktifkan** pemeriksaan
+  pembaruan. Pilihannya disimpan di `localStorage` perangkat dan bisa diubah lewat tombol ⚙️.
+- Kalau aktif: satu permintaan ke `api.github.com` tiap aplikasi dibuka (cache 6 jam di backend,
+  tanpa identitas, tanpa data penelitian). Bila versi rilis > `VERSI_APP`, muncul spanduk.
+- Penginstal **tidak pernah dipasang diam-diam**: user menekan *Unduh penginstal* →
+  *Pasang & tutup Referensia*; proses pengawas terpisah menunggu `Referensia.exe` tertutup lalu
+  menjalankan penginstal. Berkas hanya diterima dari host GitHub dan harus anggota aset rilis.
+- Ganti sumber rilis untuk fork: set env `REFERENSIA_REPO="namauser/repo"`.
+- Saat menaikkan versi, samakan tiga tempat: `app/src-tauri/tauri.conf.json`, `app/package.json`,
+  dan `VERSI_APP` di `app/backend/server.py` — lalu buat tag `v<versi>`.
+
+## 4. Pengembangan
 
 ```bash
 cd app

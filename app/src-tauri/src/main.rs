@@ -12,9 +12,9 @@ enum Backend {
 }
 
 impl Backend {
-    fn kill(&mut self) {
+    fn kill(self) {
         match self {
-            Backend::Dev(c) => {
+            Backend::Dev(mut c) => {
                 let _ = c.kill();
                 let _ = c.wait();
             }
@@ -65,7 +65,7 @@ fn main() {
             if matches!(event, tauri::WindowEvent::Destroyed) {
                 if let Some(state) = window.try_state::<BackendState>() {
                     if let Ok(mut guard) = state.0.lock() {
-                        if let Some(mut b) = guard.take() {
+                        if let Some(b) = guard.take() {
                             b.kill();
                         }
                     }

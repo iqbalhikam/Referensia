@@ -195,7 +195,7 @@ export function SpandukPembaruan({ data, onNanti, onPengaturan }) {
 }
 
 /** Isi modal ⚙️ Pengaturan. */
-export function PengaturanPembaruan({ auto, onAuto, data, galat, sibuk, onPeriksa, onClose }) {
+export function PengaturanPembaruan({ auto, onAuto, data, versi, galat, sibuk, onPeriksa, onClose }) {
   return (
     <Gaya>
       <Card className="p-6">
@@ -211,7 +211,7 @@ export function PengaturanPembaruan({ auto, onAuto, data, galat, sibuk, onPeriks
 
         <div className="mt-4 rounded-xl border border-line/60 bg-bg/50 px-3.5 py-2.5 text-[13px] flex flex-wrap gap-x-6 gap-y-1">
           <span className="text-abu">
-            Versi terpasang <b className="text-teks">{data?.versi_sekarang || "-"}</b>
+            Versi terpasang <b className="text-teks">{data?.versi_sekarang || versi || "-"}</b>
           </span>
           <span className="text-abu">
             Rilis terbaru <b className="text-teks">{data?.rilis?.versi || "belum diperiksa"}</b>

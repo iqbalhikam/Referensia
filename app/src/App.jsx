@@ -33,6 +33,7 @@ export default function App() {
     return simpan === null ? null : simpan === "1";
   });
   const [rilis, setRilis] = useState(null);
+  const [versi, setVersi] = useState("");
   const [galatRilis, setGalatRilis] = useState("");
   const [lagiCek, setLagiCek] = useState(false);
   const [bukaPengaturan, setBukaPengaturan] = useState(false);
@@ -65,7 +66,12 @@ export default function App() {
   }, [tema]);
 
   useEffect(() => {
-    health().then(() => setBackendOk(true)).catch(() => setBackendOk(false));
+    health()
+      .then((d) => {
+        setBackendOk(true);
+        setVersi(d.versi || "");
+      })
+      .catch(() => setBackendOk(false));
   }, []);
 
   // Pemeriksaan senyap saat aplikasi dibuka — hanya bila pengguna mengizinkan
@@ -254,7 +260,7 @@ export default function App() {
         {auto === null && !splash && <KonsenPembaruan key="konsen" onPilih={pilihAuto} />}
         {bukaPengaturan && (
           <PengaturanPembaruan
-            key="pengaturan" auto={auto} onAuto={pilihAuto} data={rilis} galat={galatRilis}
+            key="pengaturan" auto={auto} onAuto={pilihAuto} data={rilis} versi={versi} galat={galatRilis}
             sibuk={lagiCek} onPeriksa={() => periksa(true)} onClose={() => setBukaPengaturan(false)}
           />
         )}

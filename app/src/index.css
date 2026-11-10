@@ -281,106 +281,148 @@ body {
   45% { fill: #c7d2fe; }
 }
 
-/* ===== Tema Liquid Glass (ala Apple) ===== */
+/* ===== Tema Liquid Glass (terang, kaca berwarna ala Apple) ===== */
 [data-theme="glass"] {
-  --rf-bg: #0d1120;
-  --rf-panel: #1a2038;
-  --rf-panel2: #242c4a;
-  --rf-line: rgba(255, 255, 255, 0.16);
-  --rf-indigo: #a5b8ff;
-  --rf-indigodeep: #5b6cff;
-  --rf-amber: #ffd166;
-  --rf-teks: #f6f8ff;
-  --rf-abu: #aab2d0;
+  --rf-bg: #e9edf6;
+  --rf-panel: #ffffff;
+  --rf-panel2: #edf1f9;
+  --rf-line: rgba(38, 50, 86, 0.16);
+  --rf-indigo: #4f46e5;
+  --rf-indigodeep: #4338ca;
+  --rf-amber: #b45309;
+  --rf-teks: #1c2542;
+  --rf-abu: #5b6577;
 }
 
 [data-theme="glass"] body {
-  background-color: #0b1020;
+  background-color: #e9edf6;
   background-image:
-    radial-gradient(1000px 620px at 82% -8%, rgba(120, 140, 255, 0.34), transparent 60%),
-    radial-gradient(820px 560px at 4% 8%, rgba(255, 120, 220, 0.16), transparent 58%),
-    radial-gradient(900px 700px at 14% 105%, rgba(64, 220, 220, 0.18), transparent 60%),
-    radial-gradient(700px 500px at 92% 88%, rgba(255, 190, 90, 0.13), transparent 60%),
-    linear-gradient(160deg, #0b1020 0%, #141b36 48%, #0d1220 100%);
-  background-size: auto;
-  background-repeat: no-repeat;
+    linear-gradient(rgba(37, 48, 84, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 48, 84, 0.05) 1px, transparent 1px),
+    radial-gradient(950px 580px at 86% -12%, rgba(86, 132, 255, 0.30), transparent 62%),
+    radial-gradient(780px 540px at 0% 8%, rgba(255, 118, 190, 0.20), transparent 60%),
+    radial-gradient(860px 640px at 6% 106%, rgba(34, 211, 190, 0.24), transparent 62%),
+    radial-gradient(780px 560px at 96% 90%, rgba(128, 200, 40, 0.22), transparent 62%),
+    radial-gradient(680px 460px at 56% 44%, rgba(168, 85, 247, 0.12), transparent 66%),
+    linear-gradient(155deg, #f3f6fc 0%, #e7ecf7 48%, #eef2f9 100%);
+  background-size:
+    36px 36px,
+    36px 36px,
+    auto,
+    auto,
+    auto,
+    auto,
+    auto,
+    auto;
+  background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed;
 }
 
 [data-theme="glass"] .gradient-text {
-  background: linear-gradient(92deg, #c7d2ff 8%, #ffffff 48%, #ffd166 108%);
+  background: linear-gradient(92deg, #4338ca 6%, #7c3aed 48%, #0891b2 108%);
   -webkit-background-clip: text;
   background-clip: text;
 }
 
 [data-theme="glass"] .rf-card {
   border-radius: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   background:
-    radial-gradient(120% 90% at 16% -12%, rgba(255, 255, 255, 0.2), transparent 55%),
-    linear-gradient(158deg, rgba(23, 30, 54, 0.72) 0%, rgba(16, 21, 39, 0.62) 100%);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+    radial-gradient(130% 95% at 12% -22%, rgba(255, 255, 255, 0.98), transparent 55%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.42) 100%);
+  backdrop-filter: blur(22px) saturate(185%);
+  -webkit-backdrop-filter: blur(22px) saturate(185%);
   box-shadow:
-    0 24px 60px -24px rgba(3, 6, 20, 0.75),
-    0 2px 8px -2px rgba(3, 6, 20, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+    0 26px 54px -24px rgba(30, 41, 82, 0.34),
+    0 2px 6px -2px rgba(30, 41, 82, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.5);
 }
 
 [data-theme="glass"] header {
-  background: rgba(16, 21, 39, 0.55);
-  border-bottom-color: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(255, 255, 255, 0.56);
+  border-bottom-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(26px) saturate(185%);
+  -webkit-backdrop-filter: blur(26px) saturate(185%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 10px 30px -18px rgba(3, 6, 20, 0.8);
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 12px 32px -22px rgba(30, 41, 82, 0.38);
 }
 
 [data-theme="glass"] input,
 [data-theme="glass"] textarea,
 [data-theme="glass"] select {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 1px 2px rgba(30, 41, 82, 0.06);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
 }
 
 [data-theme="glass"] input:focus,
 [data-theme="glass"] textarea:focus,
 [data-theme="glass"] select:focus {
   outline: none;
-  border-color: rgba(165, 184, 255, 0.7);
+  border-color: rgba(99, 102, 241, 0.65);
   box-shadow:
-    0 0 0 3px rgba(91, 108, 255, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    0 0 0 3px rgba(99, 102, 241, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 [data-theme="glass"] .gradient-btn {
-  background: linear-gradient(180deg, rgba(160, 178, 255, 0.95), rgba(91, 108, 255, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.05) 46%, rgba(255, 255, 255, 0.16)),
+    linear-gradient(118deg, #4f46e5 0%, #7c3aed 52%, #0891b2 118%);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
   box-shadow:
-    0 18px 40px -14px rgba(91, 108, 255, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1px 0 rgba(11, 16, 32, 0.25);
+    0 16px 36px -12px rgba(79, 70, 229, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -12px 24px rgba(255, 255, 255, 0.14);
 }
 
 [data-theme="glass"] .gradient-btn:hover:not(:disabled) {
   box-shadow:
-    0 22px 48px -14px rgba(91, 108, 255, 0.72),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(11, 16, 32, 0.25);
+    0 20px 44px -12px rgba(79, 70, 229, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -12px 24px rgba(255, 255, 255, 0.18);
 }
 
 [data-theme="glass"] ::selection {
-  background: rgba(165, 184, 255, 0.38);
+  background: rgba(99, 102, 241, 0.22);
 }
 
 [data-theme="glass"] ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(30, 41, 82, 0.2);
 }
 [data-theme="glass"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(30, 41, 82, 0.32);
+}
+
+/* Warna status perlu versi lebih gelap agar terbaca di kaca terang. */
+[data-theme="glass"] .text-emerald-400,
+[data-theme="glass"] .text-emerald-500 {
+  color: #047857;
+}
+[data-theme="glass"] .text-amber-400,
+[data-theme="glass"] .text-amber-500 {
+  color: #b45309;
+}
+[data-theme="glass"] .text-amber-300 {
+  color: #92400e;
+}
+[data-theme="glass"] .text-red-400 {
+  color: #b91c1c;
+}
+
+[data-theme="glass"] .rfl-label {
+  color: #4b556b;
+}
+[data-theme="glass"] .rfl .ln {
+  fill: #818cf8;
 }
 
 @media (prefers-reduced-motion: reduce) {

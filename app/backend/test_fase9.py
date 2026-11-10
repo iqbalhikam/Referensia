@@ -1,4 +1,5 @@
 """Tes offline Fase 9: pemeriksa rilis GitHub & jalur pasang pembaruan."""
+import base64
 import os
 import tempfile
 import unittest
@@ -134,6 +135,22 @@ class TestPengawas(unittest.TestCase):
             self.assertIn("--pasang-setelah-tutup", args)
             self.assertEqual(args[args.index("--pasang-setelah-tutup") + 1], str(exe))
             self.assertIn("--aplikasi", args)
+
+    def test_pengawas_frozen_tidak_memakai_exe_terpasang(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            exe = Path(tmp) / "setup.exe"
+            exe.write_bytes(b"MZ")
+            with mock.patch.object(pembaruan.sys, "frozen", True, create=True), \
+                 mock.patch.object(pembaruan.os, "name", "nt"), \
+                 mock.patch.object(pembaruan.subprocess, "Popen") as p:
+                pembaruan.jadwalkan_pasang(exe)
+            perintah = p.call_args[0][0]
+            self.assertEqual(perintah[0], "powershell.exe")
+            skrip = base64.b64decode(perintah[-1]).decode("utf-16-le")
+            self.assertIn(str(exe), skrip)
+            self.assertIn("referensia-server", skrip)
+            self.assertIn("referensia-desktop", skrip)
+            self.assertNotIn(pembaruan.sys.executable, perintah)
 
     def test_pasang_setelah_tutup(self):
         with tempfile.TemporaryDirectory() as tmp:

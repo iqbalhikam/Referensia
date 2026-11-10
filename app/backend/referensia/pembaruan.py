@@ -6,6 +6,7 @@ Modul ini hanya menyediakan mekanisme: baca rilis terbaru, unduh penginstal
 """
 from __future__ import annotations
 
+import base64
 import os
 import re
 import subprocess
@@ -17,7 +18,9 @@ from urllib.parse import urlparse
 import requests
 
 REPO_DEFAULT = "iqbalhikam/Referensia"
-NAMA_APLIKASI = "Referensia.exe"
+# Nama proses aplikasi berbeda dari productName: Tauri memakai nama paket Cargo.
+NAMA_APLIKASI = os.environ.get("REFERENSIA_APP_EXE", "referensia-desktop.exe")
+NAMA_SERVER = "referensia-server.exe"
 # Hanya host artefak GitHub — tautan dari sumber lain ditolak.
 HOST_SAH = {"github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com"}
 _POLASI = re.compile(r"[^A-Za-z0-9._-]+")
@@ -110,10 +113,36 @@ def aplikasi_berjalan(nama: str) -> bool:
 
 
 def _argv_watcher() -> list[str]:
-    """Perintah untuk menjalankan ulang sisi backend sebagai pengawas terpisah."""
-    if getattr(sys, "frozen", False):
-        return [sys.executable]
+    """Pengawas mode pengembangan; versi terpasang memakai PowerShell (lihat di bawah)."""
     return [sys.executable, str(Path(__file__).resolve().parent.parent / "server.py")]
+
+
+def _skrip_pengawas_ps(installer: Path, aplikasi: str) -> str:
+    """Skrip PowerShell: tunggu aplikasi & backend mati, bereskan sisa, lalu pasang.
+
+    Pengawas tidak boleh berupa referensia-server.exe yang terpasang — file itu
+    sedang dikunci Windows, sehingga penginstal gagal menimpanya.
+    """
+    nama_app = Path(str(aplikasi)).stem.replace("'", "''")
+    nama_srv = Path(NAMA_SERVER).stem.replace("'", "''")
+    tujuan = str(installer).replace("'", "''")
+    return (
+        "$ErrorActionPreference='SilentlyContinue';"
+        "$batas=(Get-Date).AddSeconds(300);"
+        f"while((Get-Date) -lt $batas -and (Get-Process -Name '{nama_app}')){{Start-Sleep -Seconds 2}};"
+        "$tunggu=(Get-Date).AddSeconds(20);"
+        f"while((Get-Date) -lt $tunggu -and (Get-Process -Name '{nama_srv}')){{Start-Sleep -Seconds 1}};"
+        f"Stop-Process -Name '{nama_srv}' -Force;"
+        "Start-Sleep -Seconds 2;"
+        f"Start-Process -FilePath '{tujuan}'"
+    )
+
+
+def _perintah_pengawas_ps(installer: Path, aplikasi: str) -> list[str]:
+    skrip = _skrip_pengawas_ps(installer, aplikasi)
+    b64 = base64.b64encode(skrip.encode("utf-16-le")).decode("ascii")
+    return ["powershell.exe", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden",
+            "-EncodedCommand", b64]
 
 
 def jadwalkan_pasang(installer, aplikasi: str = NAMA_APLIKASI) -> bool:
@@ -124,9 +153,12 @@ def jadwalkan_pasang(installer, aplikasi: str = NAMA_APLIKASI) -> bool:
     if os.name != "nt":
         raise ValueError("Pemasangan otomatis hanya tersedia di Windows.")
     flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) | getattr(subprocess, "DETACHED_PROCESS", 0)
+    if getattr(sys, "frozen", False):
+        perintah = _perintah_pengawas_ps(installer, aplikasi)
+    else:
+        perintah = _argv_watcher() + ["--pasang-setelah-tutup", str(installer), "--aplikasi", aplikasi]
     subprocess.Popen(
-        _argv_watcher() + ["--pasang-setelah-tutup", str(installer), "--aplikasi", aplikasi],
-        creationflags=flags, stdin=subprocess.DEVNULL,
+        perintah, creationflags=flags, stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return True
 

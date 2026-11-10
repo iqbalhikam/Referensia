@@ -5,9 +5,10 @@ import ProgressView from "./components/ProgressView.jsx";
 import ResultView from "./components/ResultView.jsx";
 import LibraryView from "./components/LibraryView.jsx";
 import AnalysisView from "./components/AnalysisView.jsx";
+import CitationPageFinder from "./components/CitationPageFinder.jsx";
 import { Welcome, LogoMark } from "./components/Brand.jsx";
 import { KonsenPembaruan, SpandukPembaruan, PengaturanPembaruan } from "./components/Update.jsx";
-import { Ikon, ArrowLeft, Droplets, Library, Loader2, Moon, Settings, Sun, TriangleAlert } from "./components/icons.jsx";
+import { Ikon, ArrowLeft, BookOpen, Droplets, Library, Loader2, Moon, Settings, Sun, TriangleAlert } from "./components/icons.jsx";
 import { startSearch, getJob, health, libraryEntry, downloadUrl, libraryDownloadUrl, cekUpdate } from "./api.js";
 
 const KUNCI_AUTO = "referensia-auto-update";
@@ -248,6 +249,17 @@ export default function App() {
               Pustaka
             </button>
             <button
+              onClick={() => setView("citation-page")}
+              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-colors inline-flex items-center gap-1.5 ${
+                view === "citation-page"
+                  ? "text-teks bg-indigodeep/20 border border-indigo/30"
+                  : "text-abu hover:text-teks"
+              }`}
+            >
+              <Ikon as={BookOpen} size={15} />
+              Halaman Sitasi
+            </button>
+            <button
               onClick={() => setBukaPengaturan(true)}
               title="Pengaturan tampilan & pembaruan"
               className="relative ml-1 w-8 h-8 grid place-items-center rounded-lg text-abu hover:text-teks border border-line/60 transition-colors"
@@ -298,6 +310,9 @@ export default function App() {
         )}
         {view === "library" && (
           <LibraryView key="library" onOpen={bukaPustaka} onBack={reset} />
+        )}
+        {view === "citation-page" && (
+          <CitationPageFinder key="citation-page" onBack={reset} />
         )}
       </AnimatePresence>
       <AnimatePresence>

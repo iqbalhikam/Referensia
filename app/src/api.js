@@ -92,3 +92,44 @@ export async function cekUpdate(paksa = false) {
 }
 export const unduhPembaruan = (url) => postJson("/update/download", { url });
 export const pasangPembaruan = (lokasi) => postJson("/update/install", { lokasi });
+
+// ============================ Pencari Halaman Sitasi ============================
+export const parseRis = (teks_ris) => postJson("/citation-page/parse-ris", { teks_ris });
+export const searchCitationPageSingle = (item, query_kutipan = "") =>
+  postJson("/citation-page/search-single", { item, query_kutipan });
+export const searchCitationPageBatch = (items, query_kutipan = "") =>
+  postJson("/citation-page/search-batch", { items, query_kutipan });
+export const scanPdfCitation = (pdf_base64, query_kutipan, start_page_jurnal = "") =>
+  postJson("/citation-page/scan-pdf", { pdf_base64, query_kutipan, start_page_jurnal });
+
+export async function unduhBlobRis(items) {
+  const res = await fetch(`${BASE}/citation-page/export-ris`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items }),
+  });
+  if (!res.ok) throw new Error("Gagal mengunduh berkas RIS");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Referensia_Sitasi_Lengkap.ris";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function unduhBlobDocx(items, query_kutipan = "") {
+  const res = await fetch(`${BASE}/citation-page/export-docx`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items, query_kutipan }),
+  });
+  if (!res.ok) throw new Error("Gagal mengunduh berkas DOCX");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Referensia_Rekap_Halaman.docx";
+  a.click();
+  URL.revokeObjectURL(url);
+}

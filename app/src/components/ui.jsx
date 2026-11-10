@@ -76,7 +76,7 @@ export function Toggle({ label, hint, checked, onChange }) {
         />
       </span>
       <span>
-        <span className="block text-sm font-medium text-teks/90 group-hover:text-white">{label}</span>
+        <span className="block text-sm font-medium text-teks/90 group-hover:text-indigo">{label}</span>
         {hint && <span className="block text-[12px] text-abu leading-snug mt-0.5">{hint}</span>}
       </span>
     </button>

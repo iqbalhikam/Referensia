@@ -19,13 +19,35 @@ impl Backend {
                 let _ = c.wait();
             }
             Backend::Sidecar(c) => {
+                let pid = c.pid();
                 let _ = c.kill();
+                // Jangan biarkan exe sidecar terkunci saat penginstal menimpanya.
+                #[cfg(windows)]
+                {
+                    // /T: PyInstaller onefile memakai proses induk + anak; keduanya harus mati.
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    let _ = Command::new("taskkill")
+                        .args(["/PID", &pid.to_string(), "/T", "/F"])
+                        .output();
+                }
+                #[cfg(not(windows))]
+                let _ = pid;
             }
         }
     }
 }
 
 struct BackendState(Mutex<Option<Backend>>);
+
+fn hentikan_backend(app: &tauri::AppHandle) {
+    if let Some(state) = app.try_state::<BackendState>() {
+        if let Ok(mut guard) = state.0.lock() {
+            if let Some(b) = guard.take() {
+                b.kill();
+            }
+        }
+    }
+}
 
 fn spawn_dev() -> Option<Child> {
     let backend_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../backend");
@@ -49,10 +71,14 @@ fn main() {
             let backend = if cfg!(debug_assertions) {
                 spawn_dev().map(Backend::Dev)
             } else {
+                let app_exe = std::env::current_exe()
+                    .ok()
+                    .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
+                    .unwrap_or_else(|| "referensia-desktop.exe".to_string());
                 app.shell()
                     .sidecar("referensia-server")
                     .ok()
-                    .and_then(|cmd| cmd.spawn().ok())
+                    .and_then(|cmd| cmd.env("REFERENSIA_APP_EXE", &app_exe).spawn().ok())
                     .map(|(_, child)| Backend::Sidecar(child))
             };
             if backend.is_none() {
@@ -63,15 +89,14 @@ fn main() {
         })
         .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::Destroyed) {
-                if let Some(state) = window.try_state::<BackendState>() {
-                    if let Ok(mut guard) = state.0.lock() {
-                        if let Some(b) = guard.take() {
-                            b.kill();
-                        }
-                    }
-                }
+                hentikan_backend(window.app_handle());
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                hentikan_backend(app);
+            }
+        });
 }

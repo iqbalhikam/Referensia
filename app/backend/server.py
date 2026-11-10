@@ -29,12 +29,21 @@ from pydantic import BaseModel, Field
 
 from referensia import jalankan_referensia
 from referensia import pembaruan
+import base64
+from referensia.halaman_sitasi import (
+    parse_ris_text,
+    proses_cari_halaman_item,
+    proses_cari_halaman_batch,
+    pindai_halaman_kutipan_pdf,
+    buat_ris_terupdate,
+    buat_rekap_halaman_docx,
+)
 from referensia.engine import (buat_docx, buat_laporan_docx, buat_matriks_docx, buat_matriks_xlsx,
                                buat_markdown, buat_ris, statistik_tren, zotero_item)
 
 PORT_DEFAULT = 8756
 PUSTAKA_FILE: Path | None = None
-VERSI_APP = "1.0.3"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
+VERSI_APP = "1.0.4"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
 VERSI_API = "1.4"          # penanda build backend — untuk memastikan server tidak kedaluwarsa
 REPO_RILIS = os.environ.get("REFERENSIA_REPO", pembaruan.REPO_DEFAULT)
 UMUR_CACHE_RILIS = 6 * 3600
@@ -887,6 +896,105 @@ def pasang_pembaruan(p: PasangPembaruanParams):
     except ValueError as ex:
         raise HTTPException(400, str(ex))
     return {"ok": True, "pesan": "Penginstal berjalan otomatis begitu Referensia ditutup."}
+
+
+
+# ============================ Pencari Halaman Sitasi ============================
+class ParseRisParams(BaseModel):
+    teks_ris: str = ""
+
+
+class SearchHalamanSingleParams(BaseModel):
+    item: dict
+    query_kutipan: str = ""
+
+
+class SearchHalamanBatchParams(BaseModel):
+    items: list[dict] = Field(default_factory=list)
+    query_kutipan: str = ""
+
+
+class ScanPdfParams(BaseModel):
+    pdf_base64: str = ""
+    query_kutipan: str = ""
+    start_page_jurnal: str = ""
+
+
+class ExportHalamanRisParams(BaseModel):
+    items: list[dict] = Field(default_factory=list)
+
+
+class ExportHalamanDocxParams(BaseModel):
+    items: list[dict] = Field(default_factory=list)
+    query_kutipan: str = ""
+
+
+@app.post("/api/citation-page/parse-ris")
+def endpoint_parse_ris(p: ParseRisParams):
+    teks = p.teks_ris.strip()
+    if not teks:
+        raise HTTPException(400, "Teks berkas RIS masih kosong")
+    items = parse_ris_text(teks)
+    return {"ok": True, "total": len(items), "items": items}
+
+
+@app.post("/api/citation-page/search-single")
+def endpoint_cari_halaman_single(p: SearchHalamanSingleParams):
+    hasil = proses_cari_halaman_item(p.item, p.query_kutipan)
+    return {"ok": True, "item": hasil}
+
+
+@app.post("/api/citation-page/search-batch")
+def endpoint_cari_halaman_batch(p: SearchHalamanBatchParams):
+    if not p.items:
+        raise HTTPException(400, "Daftar referensi kosong")
+    hasil = proses_cari_halaman_batch(p.items, p.query_kutipan)
+    return {"ok": True, "total": len(hasil), "items": hasil}
+
+
+@app.post("/api/citation-page/scan-pdf")
+def endpoint_scan_pdf(p: ScanPdfParams):
+    if not p.pdf_base64:
+        raise HTTPException(400, "Data PDF kosong")
+    if not p.query_kutipan.strip():
+        raise HTTPException(400, "Kalimat atau teks kutipan yang dicari belum diisi")
+    raw_b64 = p.pdf_base64
+    if "," in raw_b64:
+        raw_b64 = raw_b64.split(",", 1)[1]
+    try:
+        pdf_bytes = base64.b64decode(raw_b64)
+    except Exception:
+        raise HTTPException(400, "Format data base64 PDF tidak valid")
+    hasil = pindai_halaman_kutipan_pdf(pdf_bytes, p.query_kutipan, p.start_page_jurnal)
+    return {"ok": True, "scan": hasil}
+
+
+@app.post("/api/citation-page/export-ris")
+def endpoint_ekspor_ris(p: ExportHalamanRisParams, background_tasks: BackgroundTasks):
+    if not p.items:
+        raise HTTPException(400, "Tidak ada data referensi untuk diekspor")
+    teks_ris = buat_ris_terupdate(p.items)
+    tmpdir = tempfile.mkdtemp(prefix="referensia_ris_")
+    path = os.path.join(tmpdir, "Referensia_Sitasi_Lengkap.ris")
+    Path(path).write_text(teks_ris, encoding="utf-8")
+    background_tasks.add_task(os.remove, path)
+    background_tasks.add_task(os.rmdir, tmpdir)
+    return FileResponse(path, media_type="application/x-research-info-systems",
+                        filename="Referensia_Sitasi_Lengkap.ris")
+
+
+@app.post("/api/citation-page/export-docx")
+def endpoint_ekspor_rekap_docx(p: ExportHalamanDocxParams, background_tasks: BackgroundTasks):
+    if not p.items:
+        raise HTTPException(400, "Tidak ada data referensi untuk diekspor")
+    docx_bytes = buat_rekap_halaman_docx(p.items, p.query_kutipan)
+    tmpdir = tempfile.mkdtemp(prefix="referensia_docx_")
+    path = os.path.join(tmpdir, "Referensia_Rekap_Halaman.docx")
+    Path(path).write_bytes(docx_bytes)
+    background_tasks.add_task(os.remove, path)
+    background_tasks.add_task(os.rmdir, tmpdir)
+    return FileResponse(path, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        filename="Referensia_Rekap_Halaman.docx")
 
 
 def _cari_dir_ui(hibah: str) -> Path | None:

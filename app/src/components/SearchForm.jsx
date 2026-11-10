@@ -169,7 +169,7 @@ export default function SearchForm({ onSubmit, error }) {
                 <span className="font-display text-[13px] font-semibold text-amber/90 tabular-nums pt-0.5">{no}</span>
                 <span className="relative">
                   {i < ALUR.length - 1 && (
-                    <span className="absolute left-[7px] top-6 bottom-[-14px] w-px bg-white/5" />
+                    <span className="absolute left-[7px] top-6 bottom-[-14px] w-px bg-line/50" />
                   )}
                   <span className="block text-[13.5px] font-medium text-teks/90">{judul}</span>
                   <span className="block text-[12px] text-abu leading-snug">{sub}</span>

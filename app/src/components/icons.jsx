@@ -4,7 +4,7 @@ import {
   Copy, Download, Droplets, FileArchive, FileCode2, FileSpreadsheet, FileText, Flag,
   FlaskConical, FolderOpen, Globe2, KeyRound, Library, Link2, Loader2, Minus, Moon,
   Network, NotebookPen, Play, Plus, Puzzle, RefreshCw, RotateCcw, Search, SearchX, Settings,
-  Sparkles, Star, StickyNote, Sun, Trash2, TrendingUp, TriangleAlert, Trophy, X, Zap,
+  Sparkles, Star, StickyNote, Sun, Trash2, TrendingUp, TriangleAlert, Trophy, Upload, X, Zap,
 } from "lucide-react";
 
 export {
@@ -13,7 +13,7 @@ export {
   Copy, Download, Droplets, FileArchive, FileCode2, FileSpreadsheet, FileText, Flag,
   FlaskConical, FolderOpen, Globe2, KeyRound, Library, Link2, Loader2, Minus, Moon,
   Network, NotebookPen, Play, Plus, Puzzle, RefreshCw, RotateCcw, Search, SearchX, Settings,
-  Sparkles, Star, StickyNote, Sun, Trash2, TrendingUp, TriangleAlert, Trophy, X, Zap,
+  Sparkles, Star, StickyNote, Sun, Trash2, TrendingUp, TriangleAlert, Trophy, Upload, X, Zap,
 };
 
 /** Ikon garis seragam 24px yang sejajar dengan teks di sekitarnya. */

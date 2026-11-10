@@ -30,6 +30,11 @@ from pydantic import BaseModel, Field
 from referensia import jalankan_referensia
 from referensia import pembaruan
 import base64
+from referensia.skripsi_checker import (
+    periksa_skripsi_lengkap,
+    ekstrak_teks_dari_file,
+    buat_laporan_audit_docx,
+)
 from referensia.halaman_sitasi import (
     parse_ris_text,
     proses_cari_halaman_item,
@@ -43,7 +48,7 @@ from referensia.engine import (buat_docx, buat_laporan_docx, buat_matriks_docx, 
 
 PORT_DEFAULT = 8756
 PUSTAKA_FILE: Path | None = None
-VERSI_APP = "1.0.4"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
+VERSI_APP = "1.0.5"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
 VERSI_API = "1.4"          # penanda build backend — untuk memastikan server tidak kedaluwarsa
 REPO_RILIS = os.environ.get("REFERENSIA_REPO", pembaruan.REPO_DEFAULT)
 UMUR_CACHE_RILIS = 6 * 3600
@@ -995,6 +1000,72 @@ def endpoint_ekspor_rekap_docx(p: ExportHalamanDocxParams, background_tasks: Bac
     background_tasks.add_task(os.rmdir, tmpdir)
     return FileResponse(path, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         filename="Referensia_Rekap_Halaman.docx")
+
+
+
+# ============================ Skripsi Checker (Non-AI) ============================
+class CheckTextParams(BaseModel):
+    teks: str = ""
+    nama_berkas: str = ""
+
+
+class CheckFileParams(BaseModel):
+    file_base64: str = ""
+    nama_berkas: str = ""
+
+
+class ExportReportParams(BaseModel):
+    hasil: dict = Field(default_factory=dict)
+
+
+@app.post("/api/skripsi-checker/check-text")
+def endpoint_check_text(p: CheckTextParams):
+    teks = p.teks.strip()
+    if not teks or len(teks) < 50:
+        raise HTTPException(400, "Teks naskah terlalu pendek (minimal 50 karakter).")
+    try:
+        hasil = periksa_skripsi_lengkap(teks, p.nama_berkas)
+        return {"ok": True, "hasil": hasil}
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/skripsi-checker/check-file")
+def endpoint_check_file(p: CheckFileParams):
+    if not p.file_base64:
+        raise HTTPException(400, "Data berkas kosong")
+    raw_b64 = p.file_base64
+    if "," in raw_b64:
+        raw_b64 = raw_b64.split(",", 1)[1]
+    try:
+        file_bytes = base64.b64decode(raw_b64)
+    except Exception:
+        raise HTTPException(400, "Format data base64 berkas tidak valid")
+    try:
+        teks = ekstrak_teks_dari_file(file_bytes, p.nama_berkas)
+        if not teks or len(teks.strip()) < 50:
+            raise HTTPException(400, "Tidak ada teks yang dapat diekstrak dari berkas ini.")
+        hasil = periksa_skripsi_lengkap(teks, p.nama_berkas)
+        return {"ok": True, "hasil": hasil}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(400, f"Gagal memeriksa berkas: {e}")
+
+
+@app.post("/api/skripsi-checker/export-report")
+def endpoint_export_audit_docx(p: ExportReportParams, background_tasks: BackgroundTasks):
+    if not p.hasil:
+        raise HTTPException(400, "Data hasil audit kosong")
+    docx_bytes = buat_laporan_audit_docx(p.hasil)
+    tmpdir = tempfile.mkdtemp(prefix="referensia_skripsi_")
+    nama_aman = f"Laporan_Audit_{re.sub(r'[^a-zA-Z0-9]', '_', p.hasil.get('nama_berkas', 'Skripsi'))[:25]}.docx"
+    path = os.path.join(tmpdir, nama_aman)
+    Path(path).write_bytes(docx_bytes)
+    background_tasks.add_task(os.remove, path)
+    background_tasks.add_task(os.rmdir, tmpdir)
+    return FileResponse(path, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        filename=nama_aman)
 
 
 def _cari_dir_ui(hibah: str) -> Path | None:

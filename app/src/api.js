@@ -133,3 +133,27 @@ export async function unduhBlobDocx(items, query_kutipan = "") {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// ============================ Skripsi Checker ============================
+export const checkSkripsiText = (teks, nama_berkas = "") =>
+  postJson("/skripsi-checker/check-text", { teks, nama_berkas });
+
+export const checkSkripsiFile = (file_base64, nama_berkas = "") =>
+  postJson("/skripsi-checker/check-file", { file_base64, nama_berkas });
+
+export async function downloadSkripsiAuditDocx(hasil) {
+  const res = await fetch(`${BASE}/skripsi-checker/export-report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hasil }),
+  });
+  if (!res.ok) throw new Error("Gagal mengunduh laporan audit skripsi");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Laporan_Audit_${(hasil.nama_berkas || "Skripsi").replace(/[^a-zA-Z0-9]/g, "_")}.docx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+

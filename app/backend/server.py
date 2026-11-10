@@ -33,7 +33,7 @@ from referensia.engine import (buat_docx, buat_laporan_docx, buat_matriks_docx, 
 
 PORT_DEFAULT = 8756
 PUSTAKA_FILE: Path | None = None
-VERSI_APP = "1.0.0"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
+VERSI_APP = "1.0.1"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
 VERSI_API = "1.4"          # penanda build backend — untuk memastikan server tidak kedaluwarsa
 REPO_RILIS = os.environ.get("REFERENSIA_REPO", pembaruan.REPO_DEFAULT)
 UMUR_CACHE_RILIS = 6 * 3600

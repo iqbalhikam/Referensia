@@ -20,7 +20,8 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [durasi, setDurasi] = useState(0);
-  const [backendOk, setBackendOk] = useState(null);
+  const [backendOk, setBackendOk] = useState(null); // null = sedang menyambung
+  const menyambung = useRef(false);
   const [splash, setSplash] = useState(true);
   const [src, setSrc] = useState("");
   const [libId, setLibId] = useState("");
@@ -65,14 +66,33 @@ export default function App() {
     localStorage.setItem("referensia-tema", tema);
   }, [tema]);
 
-  useEffect(() => {
-    health()
-      .then((d) => {
-        setBackendOk(true);
-        setVersi(d.versi || "");
-      })
-      .catch(() => setBackendOk(false));
+  // Sidecar PyInstaller butuh beberapa detik di pembukaan pertama — ulangi
+  // pemeriksaan alih-alih langsung menyimpulkan backend mati.
+  const sambungBackend = useCallback(async () => {
+    if (menyambung.current) return;
+    menyambung.current = true;
+    setBackendOk(null);
+    try {
+      for (let i = 0; i < 40; i++) {
+        try {
+          const d = await health();
+          setBackendOk(true);
+          setVersi(d.versi || "");
+          return;
+        } catch {
+          if (i >= 7) setBackendOk(false); // peringatan tampil, percobaan tetap lanjut
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+      setBackendOk(false);
+    } finally {
+      menyambung.current = false;
+    }
   }, []);
+
+  useEffect(() => {
+    sambungBackend();
+  }, [sambungBackend]);
 
   // Pemeriksaan senyap saat aplikasi dibuka — hanya bila pengguna mengizinkan
   // dan spanduk sebelumnya tidak sedang ditunda ("Nanti dulu").
@@ -162,9 +182,20 @@ export default function App() {
   return (
     <div className="min-h-screen">
       {splash && <Welcome onDone={selesaiSplash} />}
+      {backendOk === null && (
+        <div className="sticky top-14 z-30 bg-indigodeep/15 border-b border-indigo/40 text-indigo text-sm text-center px-4 py-2 backdrop-blur-md">
+          ⏳ Menyambungkan ke mesin Referensia… <span className="text-abu text-[12.5px]">(pembukaan pertama bisa 10–20 detik)</span>
+        </div>
+      )}
       {backendOk === false && (
         <div className="sticky top-14 z-30 bg-amber-500/15 border-b border-amber-500/40 text-amber-400 text-sm text-center px-4 py-2 backdrop-blur-md">
-          ⚠️ Backend Python belum terdeteksi di port 8756 — jalankan dulu servernya (lihat panduan).
+          ⚠️ Mesin Referensia di port 8756 belum merespons.
+          <button onClick={sambungBackend} className="ml-2 font-semibold underline hover:text-amber-300">
+            Coba lagi
+          </button>
+          <span className="block text-[12px] text-amber-400/80 mt-0.5">
+            Mode browser: pastikan <code>python backend/server.py</code> berjalan. Log: Documents\Referensia\backend.log
+          </span>
         </div>
       )}
       {rilis?.ada_baru && !spandukTutup && (

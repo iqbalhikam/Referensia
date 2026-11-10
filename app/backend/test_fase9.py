@@ -149,6 +149,24 @@ class TestPengawas(unittest.TestCase):
         self.assertEqual(pembaruan.pasang_setelah_tutup(Path(tempfile.gettempdir()) / "raib.exe"), 1)
 
 
+class TestLogBackend(unittest.TestCase):
+    def tearDown(self):
+        server._LOG_BERKAS = None
+
+    def test_diam_tanpa_berkas(self):
+        server._LOG_BERKAS = None
+        server._tulis_log("tidak boleh meledak")
+
+    def test_menulis_ke_berkas(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            server._LOG_BERKAS = Path(tmp) / "backend.log"
+            server._tulis_log("mulai Referensia 1.0.1")
+            server._catat_except(ValueError, ValueError("port dipakai"), None)
+            isi = (Path(tmp) / "backend.log").read_text(encoding="utf-8")
+            self.assertIn("mulai Referensia 1.0.1", isi)
+            self.assertIn("port dipakai", isi)
+
+
 class TestEndpoint(unittest.TestCase):
     def setUp(self):
         self.awal = dict(server._CACHE_RILIS)

@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import re
+import sys
 import tempfile
 import threading
 import time
@@ -33,7 +34,7 @@ from referensia.engine import (buat_docx, buat_laporan_docx, buat_matriks_docx, 
 
 PORT_DEFAULT = 8756
 PUSTAKA_FILE: Path | None = None
-VERSI_APP = "1.0.1"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
+VERSI_APP = "1.0.2"        # samakan dengan app/tauri.conf.json dan tag release v<versi>
 VERSI_API = "1.4"          # penanda build backend — untuk memastikan server tidak kedaluwarsa
 REPO_RILIS = os.environ.get("REFERENSIA_REPO", pembaruan.REPO_DEFAULT)
 UMUR_CACHE_RILIS = 6 * 3600
@@ -907,8 +908,26 @@ def pasang_ui(dir_ui: Path):
     app.mount("/", StaticFiles(directory=str(dir_ui), html=True), name="ui")
 
 
+_LOG_BERKAS: Path | None = None
+
+
+def _tulis_log(teks: str):
+    """Jejak startup/galat di Documents/Referensia/backend.log — sidecar tanpa jendela."""
+    if _LOG_BERKAS is None:
+        return
+    try:
+        with open(_LOG_BERKAS, "a", encoding="utf-8") as fh:
+            fh.write(str(teks).rstrip() + "\n")
+    except OSError:
+        pass
+
+
+def _catat_except(jenis, nilai, tb):
+    _tulis_log("".join(traceback.format_exception(jenis, nilai, tb)))
+
+
 def main():
-    global PUSTAKA_FILE
+    global PUSTAKA_FILE, _LOG_BERKAS
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=int(os.environ.get("REFERENSIA_PORT", PORT_DEFAULT)))
     parser.add_argument("--output", default=os.environ.get("REFERENSIA_OUTPUT", ""))
@@ -929,6 +948,9 @@ def main():
     dasar.mkdir(parents=True, exist_ok=True)
     os.chdir(dasar)
     PUSTAKA_FILE = dasar / "pustaka.json"
+    _LOG_BERKAS = dasar / "backend.log"
+    sys.excepthook = _catat_except
+    _tulis_log(f"=== {datetime.now():%Y-%m-%d %H:%M:%S} mulai Referensia {VERSI_APP} (api {VERSI_API}) port {args.port}")
     print(f"[Referensia] hasil disimpan di: {dasar}", flush=True)
 
     url = f"http://127.0.0.1:{args.port}"
@@ -943,7 +965,14 @@ def main():
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()
 
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
+    try:
+        uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
+    except SystemExit:
+        _tulis_log("server berhenti (SystemExit) — biasanya port sudah dipakai proses lain")
+        raise
+    except Exception:
+        _tulis_log(traceback.format_exc())
+        raise
 
 
 if __name__ == "__main__":

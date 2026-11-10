@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, Label, SalinBtn } from "./ui.jsx";
+import { Ikon, ArrowLeft, ArrowRight, FileArchive, FolderOpen, Star, StickyNote, Trash2 } from "./icons.jsx";
 import { library, hapusLibrary, libraryDownloadUrl, favorites } from "../api.js";
 
 function tanggalCantik(iso) {
@@ -62,9 +63,10 @@ export default function LibraryView({ onOpen, onBack }) {
         </div>
         <button
           onClick={onBack}
-          className="rounded-xl px-5 py-2.5 font-bold border border-line text-abu hover:text-teks hover:border-indigo transition-colors"
+          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 font-bold border border-line text-abu hover:text-teks hover:border-indigo transition-colors"
         >
-          ← Kembali
+          <Ikon as={ArrowLeft} size={15} />
+          Kembali
         </button>
       </div>
 
@@ -94,7 +96,7 @@ export default function LibraryView({ onOpen, onBack }) {
 
       {tab === "riwayat" && kosong && (
         <Card className="text-center py-12">
-          <div className="text-4xl mb-3">🗂️</div>
+          <Ikon as={FolderOpen} size={38} className="text-abu/60 mb-3" strokeWidth={1.5} />
           <div className="font-bold text-lg">Pustaka masih kosong</div>
           <p className="text-sm text-abu mt-2">Mulai satu pencarian — hasilnya akan otomatis tersimpan di sini.</p>
         </Card>
@@ -108,7 +110,11 @@ export default function LibraryView({ onOpen, onBack }) {
               <div className="font-bold text-[15px] leading-snug mt-1">{e.topik}</div>
               <div className="text-[12.5px] text-abu mt-1.5">
                 {e.total} referensi · {e.jumlah_pdf} PDF
-                {e.n_favorit > 0 && <span className="text-amber"> · ★ {e.n_favorit} favorit</span>}
+                {e.n_favorit > 0 && (
+                  <span className="text-amber inline-flex items-center gap-1 ml-1">
+                    ·<Ikon as={Star} size={12} className="fill-current" />{e.n_favorit} favorit
+                  </span>
+                )}
                 {!e.zip_ada && <span className="text-amber-400"> · ZIP tidak ada di disk</span>}
               </div>
             </div>
@@ -122,9 +128,10 @@ export default function LibraryView({ onOpen, onBack }) {
               {e.zip_ada && (
                 <a
                   href={libraryDownloadUrl(e.id)}
-                  className="rounded-xl px-4 py-2 text-[13px] font-bold border border-line text-abu hover:text-teks hover:border-indigo/60 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[13px] font-bold border border-line text-abu hover:text-teks hover:border-indigo/60 transition-colors"
                 >
-                  📦 ZIP
+                  <Ikon as={FileArchive} size={14} />
+                  ZIP
                 </a>
               )}
               <button
@@ -132,7 +139,7 @@ export default function LibraryView({ onOpen, onBack }) {
                 className="rounded-xl px-3 py-2 text-[13px] font-bold border border-line text-abu hover:text-red-400 hover:border-red-500/50 transition-colors"
                 title="Hapus dari pustaka"
               >
-                🗑
+                <Ikon as={Trash2} size={15} />
               </button>
             </div>
           </div>
@@ -141,10 +148,10 @@ export default function LibraryView({ onOpen, onBack }) {
 
       {tab === "favorit" && favGroups && favGroups.length === 0 && (
         <Card className="text-center py-12">
-          <div className="text-4xl mb-3">☆</div>
+          <Ikon as={Star} size={38} className="text-abu/60 mb-3" strokeWidth={1.5} />
           <div className="font-bold text-lg">Belum ada favorit</div>
           <p className="text-sm text-abu mt-2">
-            Di halaman hasil, klik ☆ pada baris referensi untuk menandainya. Favorit terkumpul di sini.
+            Di halaman hasil, klik ikon bintang pada baris referensi untuk menandainya. Favorit terkumpul di sini.
           </p>
         </Card>
       )}
@@ -158,20 +165,24 @@ export default function LibraryView({ onOpen, onBack }) {
             </div>
             <button
               onClick={() => onOpen(g.lib_id)}
-              className="rounded-xl px-4 py-2 text-[12.5px] font-bold border border-line text-abu hover:text-teks hover:border-indigo/60 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12.5px] font-bold border border-line text-abu hover:text-teks hover:border-indigo/60 transition-colors"
             >
-              Buka hasil lengkap →
+              Buka hasil lengkap
+              <Ikon as={ArrowRight} size={13} />
             </button>
           </div>
           <div className="space-y-3">
             {g.refs.map((r) => (
               <div key={r.uid} className="border-t border-line/60 pt-3">
                 <div className="text-[13px] font-semibold leading-snug">
-                  <span className="text-amber mr-1.5">★</span>{r.judul}
+                  <Ikon as={Star} size={13} className="fill-current text-amber mr-1.5" />{r.judul}
                   <span className="text-abu font-normal"> ({r.tahun || "-"})</span>
                 </div>
                 {r.catatan_pribadi && (
-                  <div className="text-[12px] text-abu mt-1">📝 {r.catatan_pribadi}</div>
+                  <div className="flex items-start gap-1.5 text-[12px] text-abu mt-1">
+                    <Ikon as={StickyNote} size={13} className="mt-0.5" />
+                    {r.catatan_pribadi}
+                  </div>
                 )}
                 {r.apa && (
                   <div className="flex items-start gap-2 mt-1.5">

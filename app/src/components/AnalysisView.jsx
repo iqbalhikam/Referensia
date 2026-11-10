@@ -1,15 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, SectionTitle, SalinBtn, inputCls, Field } from "./ui.jsx";
+import {
+  Ikon, ArrowLeft, BookMarked, Calculator, Compass, Download, Flag, FlaskConical,
+  Globe2, KeyRound, Minus, Network, Plus, Puzzle, Sparkles, TrendingUp, TriangleAlert, Trophy,
+} from "./icons.jsx";
 import { jaringanSitasi, asistenAI } from "../api.js";
 
 const TABS = [
-  ["tren", "📈 Tren & Gap"],
-  ["jaringan", "🕸️ Jaringan Sitasi"],
-  ["ai", "🤖 Asisten AI"],
+  ["tren", "Tren & Gap", TrendingUp],
+  ["jaringan", "Jaringan Sitasi", Network],
+  ["ai", "Asisten AI", Sparkles],
 ];
 
 const KOSONG = { tahun: [], sumber: [], pendekatan: {}, analisis: {}, indeks: {}, kunci: {}, klaster: [], gap: [] };
+
+function JudulBagian({ ikon, children }) {
+  return (
+    <SectionTitle color="text-indigo">
+      <span className="inline-flex items-center gap-2">
+        <Ikon as={ikon} size={15} />
+        {children}
+      </span>
+    </SectionTitle>
+  );
+}
 
 export default function AnalysisView({ result, src, onBack }) {
   const [tab, setTab] = useState("tren");
@@ -23,21 +38,23 @@ export default function AnalysisView({ result, src, onBack }) {
     >
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <button onClick={onBack} className="text-[12.5px] font-bold text-abu hover:text-teks mb-2">
-            ← Kembali ke hasil
+          <button onClick={onBack} className="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-abu hover:text-teks mb-2">
+            <Ikon as={ArrowLeft} size={14} />
+            Kembali ke hasil
           </button>
           <h1 className="font-display text-2xl font-semibold text-teks">Analisis lanjutan</h1>
           <p className="text-sm text-abu mt-1">{result.topik}</p>
         </div>
         <div className="flex gap-1.5 rounded-xl border border-line bg-panel/60 p-1">
-          {TABS.map(([id, label]) => (
+          {TABS.map(([id, label, IkonTab]) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`px-3.5 py-2 rounded-lg text-[13px] font-bold transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-bold transition-colors ${
                 tab === id ? "bg-indigodeep/25 text-teks border border-indigo/30" : "text-abu hover:text-teks"
               }`}
             >
+              <Ikon as={IkonTab} size={14} />
               {label}
             </button>
           ))}
@@ -84,7 +101,7 @@ function Tren({ result, analisis }) {
       </div>
 
       <Card>
-        <SectionTitle color="text-indigo">📈 Sebaran tahun terbit</SectionTitle>
+        <JudulBagian ikon={TrendingUp}>Sebaran tahun terbit</JudulBagian>
         {tahun.length ? (
           <>
             <div className="flex items-end gap-2 h-44 overflow-x-auto pb-1">
@@ -126,7 +143,7 @@ function Tren({ result, analisis }) {
 
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <SectionTitle color="text-indigo">🧪 Pendekatan penelitian</SectionTitle>
+          <JudulBagian ikon={FlaskConical}>Pendekatan penelitian</JudulBagian>
           {pendekatan.length ? (
             <div className="space-y-2.5">
               {pendekatan.map(([label, n]) => (
@@ -147,7 +164,7 @@ function Tren({ result, analisis }) {
         </Card>
 
         <Card>
-          <SectionTitle color="text-indigo">🧮 Teknik analisis terbanyak</SectionTitle>
+          <JudulBagian ikon={Calculator}>Teknik analisis terbanyak</JudulBagian>
           {analisisTeknik.length ? (
             <div className="space-y-2.5">
               {analisisTeknik.map(([label, n]) => (
@@ -170,7 +187,7 @@ function Tren({ result, analisis }) {
 
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <SectionTitle color="text-indigo">📚 Jurnal paling sering muncul</SectionTitle>
+          <JudulBagian ikon={BookMarked}>Jurnal paling sering muncul</JudulBagian>
           {analisis.sumber?.length ? (
             <div className="space-y-2">
               {analisis.sumber.map((s, i) => (
@@ -189,12 +206,13 @@ function Tren({ result, analisis }) {
         </Card>
 
         <Card>
-          <SectionTitle color="text-indigo">🔑 Kata kunci yang paling dibahas</SectionTitle>
+          <JudulBagian ikon={KeyRound}>Kata kunci yang paling dibahas</JudulBagian>
           {["Nasional", "Internasional"].map((kat) =>
             analisis.kunci?.[kat]?.length ? (
               <div key={kat} className="mb-4 last:mb-0">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-abu mb-2">
-                  {kat === "Nasional" ? "🇮🇩" : "🌍"} {kat}
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-abu mb-2">
+                  <Ikon as={kat === "Nasional" ? Flag : Globe2} size={12} />
+                  {kat}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {analisis.kunci[kat].map((k) => (
@@ -214,7 +232,7 @@ function Tren({ result, analisis }) {
 
       {analisis.klaster?.length > 0 && (
         <Card>
-          <SectionTitle color="text-indigo">🧩 Klaster topik</SectionTitle>
+          <JudulBagian ikon={Puzzle}>Klaster topik</JudulBagian>
           <div className="grid md:grid-cols-2 gap-3">
             {analisis.klaster.map((k, i) => (
               <div key={i} className="rounded-xl border border-line bg-bg/40 px-3.5 py-3">
@@ -234,7 +252,7 @@ function Tren({ result, analisis }) {
       )}
 
       <Card>
-        <SectionTitle color="text-indigo">🧭 Petunjuk celah penelitian (dari abstrak)</SectionTitle>
+        <JudulBagian ikon={Compass}>Petunjuk celah penelitian (dari abstrak)</JudulBagian>
         {analisis.gap?.length ? (
           <div className="space-y-3">
             {analisis.gap.map((g, i) => (
@@ -341,7 +359,7 @@ function Jaringan({ src }) {
   if (sibuk) {
     return (
       <Card className="text-center py-12">
-        <div className="text-3xl mb-3">🕸️</div>
+        <Ikon as={Network} size={38} className="text-indigo/70 mb-3" strokeWidth={1.5} />
         <div className="font-bold">Menghubungi OpenAlex…</div>
         <p className="text-sm text-abu mt-1">Mengambil daftar referensi & sitasi tiap paper (bisa 30–60 detik).</p>
       </Card>
@@ -350,7 +368,10 @@ function Jaringan({ src }) {
   if (err) {
     return (
       <Card className="text-center py-10">
-        <div className="text-sm text-amber mb-3">⚠️ {err}</div>
+        <div className="inline-flex items-center gap-1.5 text-sm text-amber mb-3">
+          <Ikon as={TriangleAlert} size={15} />
+          {err}
+        </div>
         <button onClick={muat} className="rounded-xl border border-line px-5 py-2.5 text-[13px] font-bold hover:border-indigo">
           Coba lagi
         </button>
@@ -413,8 +434,12 @@ function Graf({ data }) {
             {data.jumlah.dikenali} paper dikenali · {data.jumlah.luar} karya luar · {data.jumlah.koneksi} koneksi sitasi
           </div>
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setZoom((z) => Math.min(2.6, z + 0.2))} className="w-7 h-7 rounded-lg border border-line text-abu hover:text-teks">+</button>
-            <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))} className="w-7 h-7 rounded-lg border border-line text-abu hover:text-teks">−</button>
+            <button onClick={() => setZoom((z) => Math.min(2.6, z + 0.2))} title="Perbesar" className="w-7 h-7 grid place-items-center rounded-lg border border-line text-abu hover:text-teks">
+              <Ikon as={Plus} size={14} />
+            </button>
+            <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))} title="Perkecil" className="w-7 h-7 grid place-items-center rounded-lg border border-line text-abu hover:text-teks">
+              <Ikon as={Minus} size={14} />
+            </button>
             <button
               onClick={() => { setZoom(1); setGeser({ x: 0, y: 0 }); }}
               className="px-2.5 h-7 rounded-lg border border-line text-[12px] text-abu hover:text-teks"
@@ -487,7 +512,7 @@ function Graf({ data }) {
       </p>
 
       <Card>
-        <SectionTitle color="text-indigo">🏆 Paper paling berpengaruh di hasil ini</SectionTitle>
+        <JudulBagian ikon={Trophy}>Paper paling berpengaruh di hasil ini</JudulBagian>
         <div className="space-y-2">
           {data.teratas.map((n, i) => (
             <div key={n.id} className="flex items-start gap-3 text-[13px]">
@@ -571,7 +596,7 @@ function Asisten({ src }) {
   return (
     <div className="space-y-4">
       <Card>
-        <SectionTitle color="text-indigo">🤖 Asisten AI (pakai API key sendiri)</SectionTitle>
+        <JudulBagian ikon={Sparkles}>Asisten AI (pakai API key sendiri)</JudulBagian>
         <p className="text-[12.5px] text-abu mb-4 leading-relaxed">
           AI hanya membaca judul, abstrak, metode, dan hasil utama dari referensi di hasil ini. Key
           disimpan di perangkat ini dan dikirim langsung ke penyedia yang kamu pilih — bukan ke server
@@ -627,7 +652,12 @@ function Asisten({ src }) {
           </button>
           <span className="text-[11.5px] text-abu">Biasanya 10–40 detik tergantung penyedia.</span>
         </div>
-        {err && <div className="mt-3 text-[13px] text-amber">⚠️ {err}</div>}
+        {err && (
+          <div className="flex items-start gap-1.5 mt-3 text-[13px] text-amber">
+            <Ikon as={TriangleAlert} size={15} className="mt-0.5" />
+            {err}
+          </div>
+        )}
       </Card>
 
       {teks && (
@@ -636,8 +666,9 @@ function Asisten({ src }) {
             <SectionTitle color="text-indigo">Hasil</SectionTitle>
             <div className="flex items-center gap-2">
               <SalinBtn teks={teks}>hasil AI</SalinBtn>
-              <button onClick={unduh} className="rounded-xl border border-line px-3 py-1.5 text-[12px] font-bold text-abu hover:text-teks">
-                ⬇️ .md
+              <button onClick={unduh} className="inline-flex items-center gap-1.5 rounded-xl border border-line px-3 py-1.5 text-[12px] font-bold text-abu hover:text-teks">
+                <Ikon as={Download} size={13} />
+                .md
               </button>
             </div>
           </div>

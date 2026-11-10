@@ -7,10 +7,14 @@ import LibraryView from "./components/LibraryView.jsx";
 import AnalysisView from "./components/AnalysisView.jsx";
 import { Welcome, LogoMark } from "./components/Brand.jsx";
 import { KonsenPembaruan, SpandukPembaruan, PengaturanPembaruan } from "./components/Update.jsx";
+import { Ikon, ArrowLeft, Droplets, Library, Loader2, Moon, Settings, Sun, TriangleAlert } from "./components/icons.jsx";
 import { startSearch, getJob, health, libraryEntry, downloadUrl, libraryDownloadUrl, cekUpdate } from "./api.js";
 
 const KUNCI_AUTO = "referensia-auto-update";
 const KUNCI_TUNDA = "referensia-tunda-pembaruan";
+const URUTAN_TEMA = ["dark", "light", "glass"];
+const IKON_TEMA = { dark: Moon, light: Sun, glass: Droplets };
+const NAMA_TEMA = { dark: "Gelap", light: "Terang", glass: "Liquid Glass" };
 
 export default function App() {
   const [view, setView] = useState("form");
@@ -28,7 +32,10 @@ export default function App() {
   const [initialFav, setInitialFav] = useState([]);
   const [initialNotes, setInitialNotes] = useState({});
   const [zipHref, setZipHref] = useState("");
-  const [tema, setTema] = useState(() => localStorage.getItem("referensia-tema") || "dark");
+  const [tema, setTema] = useState(() => {
+    const simpan = localStorage.getItem("referensia-tema");
+    return URUTAN_TEMA.includes(simpan) ? simpan : "dark";
+  });
   const [auto, setAuto] = useState(() => {
     const simpan = localStorage.getItem(KUNCI_AUTO);
     return simpan === null ? null : simpan === "1";
@@ -60,6 +67,8 @@ export default function App() {
     setSpandukTutup(false);
     if (nyalakan) periksa(true);
   }
+
+  const putarTema = () => setTema((t) => URUTAN_TEMA[(URUTAN_TEMA.indexOf(t) + 1) % URUTAN_TEMA.length]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = tema;
@@ -184,12 +193,14 @@ export default function App() {
       {splash && <Welcome onDone={selesaiSplash} />}
       {backendOk === null && (
         <div className="sticky top-14 z-30 bg-indigodeep/15 border-b border-indigo/40 text-indigo text-sm text-center px-4 py-2 backdrop-blur-md">
-          ⏳ Menyambungkan ke mesin Referensia… <span className="text-abu text-[12.5px]">(pembukaan pertama bisa 10–20 detik)</span>
+          <Ikon as={Loader2} size={15} className="animate-spin mr-1.5" />
+          Menyambungkan ke mesin Referensia… <span className="text-abu text-[12.5px]">(pembukaan pertama bisa 10–20 detik)</span>
         </div>
       )}
       {backendOk === false && (
         <div className="sticky top-14 z-30 bg-amber-500/15 border-b border-amber-500/40 text-amber-400 text-sm text-center px-4 py-2 backdrop-blur-md">
-          ⚠️ Mesin Referensia di port 8756 belum merespons.
+          <Ikon as={TriangleAlert} size={15} className="mr-1.5" />
+          Mesin Referensia di port 8756 belum merespons.
           <button onClick={sambungBackend} className="ml-2 font-semibold underline hover:text-amber-300">
             Coba lagi
           </button>
@@ -227,28 +238,29 @@ export default function App() {
             </button>
             <button
               onClick={() => setView("library")}
-              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${
+              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-colors inline-flex items-center gap-1.5 ${
                 view === "library"
                   ? "text-teks bg-indigodeep/20 border border-indigo/30"
                   : "text-abu hover:text-teks"
               }`}
             >
-              📚 Pustaka
+              <Ikon as={Library} size={15} />
+              Pustaka
             </button>
             <button
               onClick={() => setBukaPengaturan(true)}
-              title="Pengaturan pembaruan"
+              title="Pengaturan tampilan & pembaruan"
               className="relative ml-1 w-8 h-8 grid place-items-center rounded-lg text-abu hover:text-teks border border-line/60 transition-colors"
             >
-              ⚙️
+              <Ikon as={Settings} size={16} />
               {rilis?.ada_baru && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber" />}
             </button>
             <button
-              onClick={() => setTema(tema === "dark" ? "light" : "dark")}
-              title={tema === "dark" ? "Ganti ke tema terang" : "Ganti ke tema gelap"}
+              onClick={putarTema}
+              title={`Tema ${NAMA_TEMA[tema]} — klik untuk ${NAMA_TEMA[URUTAN_TEMA[(URUTAN_TEMA.indexOf(tema) + 1) % URUTAN_TEMA.length]]}`}
               className="ml-1 w-8 h-8 grid place-items-center rounded-lg text-abu hover:text-teks border border-line/60 transition-colors"
             >
-              {tema === "dark" ? "☀️" : "🌙"}
+              <Ikon as={IKON_TEMA[tema]} size={16} />
             </button>
           </nav>
         </div>
@@ -262,9 +274,10 @@ export default function App() {
               <div className="text-center pb-10 -mt-4">
                 <button
                   onClick={reset}
-                  className="rounded-2xl px-8 py-3 font-bold border border-line text-abu hover:text-teks hover:border-indigo transition-colors"
+                  className="inline-flex items-center gap-2 rounded-2xl px-8 py-3 font-bold border border-line text-abu hover:text-teks hover:border-indigo transition-colors"
                 >
-                  ← Kembali ke Form
+                  <Ikon as={ArrowLeft} size={16} />
+                  Kembali ke Form
                 </button>
               </div>
             )}
@@ -293,6 +306,7 @@ export default function App() {
           <PengaturanPembaruan
             key="pengaturan" auto={auto} onAuto={pilihAuto} data={rilis} versi={versi} galat={galatRilis}
             sibuk={lagiCek} onPeriksa={() => periksa(true)} onClose={() => setBukaPengaturan(false)}
+            tema={tema} onTema={setTema}
           />
         )}
       </AnimatePresence>

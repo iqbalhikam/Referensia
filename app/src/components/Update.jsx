@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, Label, Toggle, SalinBtn } from "./ui.jsx";
+import {
+  Ikon, ArrowUpFromLine, Check, CheckCircle2, Download, Droplets, Moon, Play,
+  RefreshCw, Settings, Sun, TriangleAlert, X,
+} from "./icons.jsx";
 import { unduhPembaruan, pasangPembaruan } from "../api.js";
+
+const TEMA = [
+  ["dark", "Gelap", Moon],
+  ["light", "Terang", Sun],
+  ["glass", "Liquid Glass", Droplets],
+];
 
 const MB = (n) => (n > 0 ? `${(n / 1048576).toFixed(1)} MB` : "-");
 
@@ -49,9 +59,10 @@ export function KonsenPembaruan({ onPilih }) {
         <div className="grid sm:grid-cols-2 gap-2.5 mt-6">
           <button
             onClick={() => onPilih(true)}
-            className="gradient-btn rounded-xl py-3 text-[14px] font-semibold text-white"
+            className="gradient-btn inline-flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-semibold text-white"
           >
-            ✓ Aktifkan pembaruan otomatis
+            <Ikon as={Check} size={16} />
+            Aktifkan pembaruan otomatis
           </button>
           <button
             onClick={() => onPilih(false)}
@@ -60,7 +71,9 @@ export function KonsenPembaruan({ onPilih }) {
             Nonaktifkan saja
           </button>
         </div>
-        <div className="text-[11.5px] text-abu/80 mt-3.5">Pilihan ini bisa diubah kapan saja lewat ⚙️ di kanan atas.</div>
+        <div className="text-[11.5px] text-abu/80 mt-3.5">
+          Pilihan ini bisa diubah kapan saja lewat ikon <Ikon as={Settings} size={12} /> di kanan atas.
+        </div>
       </Card>
     </Gaya>
   );
@@ -114,9 +127,12 @@ export function PanelRilis({ data }) {
       )}
 
       {status === "dijadwalkan" ? (
-        <div className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3.5 py-3 text-[13px] text-emerald-400">
-          ✓ Penginstal siap. <b>Tutup jendela Referensia</b> sekarang — pemasangan berjalan otomatis beberapa
-          detik kemudian.
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3.5 py-3 text-[13px] text-emerald-400">
+          <Ikon as={CheckCircle2} size={16} className="mt-0.5" />
+          <span>
+            <b>Penginstal siap.</b> Tutup jendela Referensia sekarang — pemasangan berjalan otomatis beberapa
+            detik kemudian.
+          </span>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2 mt-3.5">
@@ -124,17 +140,19 @@ export function PanelRilis({ data }) {
             <button
               onClick={unduh}
               disabled={!aset || status === "mengunduh"}
-              className="gradient-btn rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+              className="gradient-btn inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
             >
-              {status === "mengunduh" ? "Mengunduh…" : `⬇️ Unduh penginstal${aset ? ` (${MB(aset.ukuran)})` : ""}`}
+              <Ikon as={Download} size={15} />
+              {status === "mengunduh" ? "Mengunduh…" : `Unduh penginstal${aset ? ` (${MB(aset.ukuran)})` : ""}`}
             </button>
           )}
           {status === "terunduh" && berkas && (
             <button
               onClick={pasang}
-              className="gradient-btn rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white"
+              className="gradient-btn inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white"
             >
-              ▶ Pasang & tutup Referensia
+              <Ikon as={Play} size={15} />
+              Pasang & tutup Referensia
             </button>
           )}
           {r.laman && (
@@ -157,7 +175,12 @@ export function PanelRilis({ data }) {
         </div>
       )}
       {!aset && <div className="text-[12px] text-amber-400 mt-2.5">Rilis ini belum punya penginstal .exe.</div>}
-      {galat && <div className="text-[12px] text-amber-400 mt-2.5">⚠️ {galat}</div>}
+      {galat && (
+        <div className="flex items-start gap-1.5 text-[12px] text-amber-400 mt-2.5">
+          <Ikon as={TriangleAlert} size={14} className="mt-0.5" />
+          {galat}
+        </div>
+      )}
       <div className="text-[11.5px] text-abu/80 mt-2.5">
         Berkas hanya diambil dari host GitHub dan disimpan di folder Referensia di Documents.
       </div>
@@ -172,8 +195,9 @@ export function SpandukPembaruan({ data, onNanti, onPengaturan }) {
   return (
     <div className="sticky top-14 z-30 bg-indigodeep/20 border-b border-indigo/40 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-5 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px]">
-        <span className="text-teks font-semibold">
-          ⬆️ Referensia {r.versi} tersedia — kamu masih di {data.versi_sekarang}
+        <span className="inline-flex items-center gap-1.5 text-teks font-semibold">
+          <Ikon as={ArrowUpFromLine} size={15} />
+          Referensia {r.versi} tersedia — kamu masih di {data.versi_sekarang}
         </span>
         <button onClick={() => setBuka((v) => !v)} className="text-indigo hover:underline font-medium">
           {buka ? "Sembunyikan" : "Lihat & unduh"}
@@ -181,8 +205,9 @@ export function SpandukPembaruan({ data, onNanti, onPengaturan }) {
         <button onClick={onNanti} className="text-abu hover:text-teks">
           Nanti dulu
         </button>
-        <button onClick={onPengaturan} className="ml-auto text-abu hover:text-teks">
-          Pengaturan ⚙️
+        <button onClick={onPengaturan} className="ml-auto inline-flex items-center gap-1.5 text-abu hover:text-teks">
+          <Ikon as={Settings} size={14} />
+          Pengaturan
         </button>
         {buka && (
           <div className="w-full pb-1">
@@ -194,18 +219,22 @@ export function SpandukPembaruan({ data, onNanti, onPengaturan }) {
   );
 }
 
-/** Isi modal ⚙️ Pengaturan. */
-export function PengaturanPembaruan({ auto, onAuto, data, versi, galat, sibuk, onPeriksa, onClose }) {
+/** Isi modal pengaturan tampilan & pembaruan. */
+export function PengaturanPembaruan({ auto, onAuto, data, versi, galat, sibuk, onPeriksa, onClose, tema = "dark", onTema }) {
   return (
     <Gaya>
       <Card className="p-6">
         <div className="flex items-start">
           <div>
             <Label>Pengaturan</Label>
-            <h2 className="font-display text-[19px] font-bold mt-1">Pembaruan aplikasi</h2>
+            <h2 className="font-display text-[19px] font-bold mt-1">Tampilan & pembaruan</h2>
           </div>
-          <button onClick={onClose} className="ml-auto text-abu hover:text-teks text-lg leading-none px-1.5">
-            ✕
+          <button
+            onClick={onClose}
+            aria-label="Tutup pengaturan"
+            className="ml-auto text-abu hover:text-teks leading-none px-1.5 py-1"
+          >
+            <Ikon as={X} size={18} />
           </button>
         </div>
 
@@ -216,6 +245,26 @@ export function PengaturanPembaruan({ auto, onAuto, data, versi, galat, sibuk, o
           <span className="text-abu">
             Rilis terbaru <b className="text-teks">{data?.rilis?.versi || "belum diperiksa"}</b>
           </span>
+        </div>
+
+        <div className="mt-4">
+          <Label>Tema tampilan</Label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {TEMA.map(([id, label, IkonTema]) => (
+              <button
+                key={id}
+                onClick={() => onTema?.(id)}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12.5px] font-semibold border transition-colors ${
+                  tema === id
+                    ? "border-indigo text-teks bg-indigodeep/20"
+                    : "border-line/60 text-abu hover:text-teks hover:border-indigo/50"
+                }`}
+              >
+                <Ikon as={IkonTema} size={14} />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mt-4">
@@ -231,16 +280,22 @@ export function PengaturanPembaruan({ auto, onAuto, data, versi, galat, sibuk, o
           <button
             onClick={onPeriksa}
             disabled={sibuk}
-            className="rounded-xl px-4 py-2 text-[13px] font-semibold border border-line text-teks hover:border-indigo transition-colors disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold border border-line text-teks hover:border-indigo transition-colors disabled:opacity-60"
           >
-            {sibuk ? "Memeriksa…" : "🔄 Periksa sekarang"}
+            <Ikon as={RefreshCw} size={14} className={sibuk ? "animate-spin" : ""} />
+            {sibuk ? "Memeriksa…" : "Periksa sekarang"}
           </button>
           <span className="text-[12px] text-abu">
             {auto === false ? "Pemeriksaan otomatis nonaktif — periksa manual bila perlu." : ""}
           </span>
         </div>
 
-        {galat && <div className="text-[12.5px] text-amber-400 mt-3">⚠️ {galat}</div>}
+        {galat && (
+          <div className="flex items-start gap-1.5 text-[12.5px] text-amber-400 mt-3">
+            <Ikon as={TriangleAlert} size={14} className="mt-0.5" />
+            {galat}
+          </div>
+        )}
 
         {data?.ada_baru ? (
           <div className="mt-4 rounded-2xl border border-indigo/40 bg-indigodeep/15 p-4">
@@ -249,7 +304,10 @@ export function PengaturanPembaruan({ auto, onAuto, data, versi, galat, sibuk, o
           </div>
         ) : (
           data && !galat && (
-            <div className="mt-4 text-[13px] text-emerald-400">✓ Sudah versi terbaru.</div>
+            <div className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-emerald-400">
+              <Ikon as={CheckCircle2} size={15} />
+              Sudah versi terbaru.
+            </div>
           )
         )}
       </Card>

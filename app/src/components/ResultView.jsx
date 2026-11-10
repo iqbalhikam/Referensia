@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, SectionTitle, Chip, ScoreBadge, Label, SalinBtn, Field, inputCls } from "./ui.jsx";
+import {
+  Ikon, ArrowRight, BookOpen, Check, CheckCircle2, ChevronDown, Download, FileArchive,
+  FileCode2, FileSpreadsheet, FileText, Flag, FolderOpen, Globe2, Link2, NotebookPen,
+  RotateCcw, Search, Star, StickyNote, TrendingUp, TriangleAlert, Zap,
+} from "./icons.jsx";
 import { toggleFavorit, exportUrl, kirimZotero, bukaFolder, simpanNote, kirimNotion, verifikasiNotion } from "../api.js";
 
 const NAMA_JENIS = {
@@ -21,6 +26,17 @@ function teksMetode(m) {
   return b.length ? b.join(" · ") : "-";
 }
 
+function JudulBagian({ ikon, children, color = "text-indigo" }) {
+  return (
+    <SectionTitle color={color}>
+      <span className="inline-flex items-center gap-2">
+        <Ikon as={ikon} size={15} />
+        {children}
+      </span>
+    </SectionTitle>
+  );
+}
+
 function CatatanBox({ uid, note, warna, onNote }) {
   const [draft, setDraft] = useState(note || "");
   const [status, setStatus] = useState("");
@@ -28,7 +44,7 @@ function CatatanBox({ uid, note, warna, onNote }) {
     setStatus("menyimpan…");
     try {
       await onNote(uid, draft);
-      setStatus("✓ tersimpan");
+      setStatus("Tersimpan");
       setTimeout(() => setStatus(""), 1500);
     } catch (e) {
       setStatus(`gagal: ${e.message}`);
@@ -51,7 +67,10 @@ function CatatanBox({ uid, note, warna, onNote }) {
         >
           Simpan catatan
         </button>
-        <span className="text-[11px] text-abu">{status || "Ikut terbawa ke ekspor Excel & Markdown"}</span>
+        <span className="text-[11px] text-abu inline-flex items-center gap-1">
+          {status === "Tersimpan" && <Ikon as={Check} size={12} className="text-emerald-400" />}
+          {status || "Ikut terbawa ke ekspor Excel & Markdown"}
+        </span>
       </div>
     </div>
   );
@@ -72,14 +91,14 @@ function BarisReferensi({ r, warna, fav, onFav, note, onNote }) {
             onClick={(e) => { e.stopPropagation(); onFav(r.uid, !fav); }}
             className={`mr-1.5 transition-colors ${fav ? "text-amber" : "text-abu/40 hover:text-amber"}`}
           >
-            {fav ? "★" : "☆"}
+            <Ikon as={Star} size={16} className={fav ? "fill-current" : ""} />
           </button>
           {r.no}
         </td>
         <td className="px-3 py-3"><ScoreBadge skor={r.skor} /></td>
         <td className="px-3 py-3 min-w-64">
           <div className="font-bold text-[13.5px] leading-snug">
-            {note && <span title="Ada catatan pribadi" className="mr-1">📝</span>}
+            {note && <Ikon as={StickyNote} size={13} className="text-amber mr-1" title="Ada catatan pribadi" />}
             {r.judul}
           </div>
           <div className="text-abu text-[12px] mt-1">
@@ -100,9 +119,10 @@ function BarisReferensi({ r, warna, fav, onFav, note, onNote }) {
               {r.duplikat && (
                 <span
                   title={`Sudah pernah diambil di pencarian: ${r.duplikat.topik}`}
-                  className="text-[10px] font-bold uppercase tracking-wider border border-amber/50 bg-amber/10 text-amber rounded-full px-2 py-0.5"
+                  className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider border border-amber/50 bg-amber/10 text-amber rounded-full px-2 py-0.5"
                 >
-                  ↺ pernah diambil
+                  <Ikon as={RotateCcw} size={10} />
+                  pernah diambil
                 </span>
               )}
             </div>
@@ -121,9 +141,13 @@ function BarisReferensi({ r, warna, fav, onFav, note, onNote }) {
             </a>
           ) : "-"}
         </td>
-        <td className="px-3 py-3 text-center">{r.pdf ? "✅" : "—"}</td>
+        <td className="px-3 py-3 text-center">
+          {r.pdf ? <Ikon as={Check} size={15} className="text-emerald-500" /> : "—"}
+        </td>
         <td className="px-2 py-3 text-abu">
-          <motion.span animate={{ rotate: buka ? 180 : 0 }} className="inline-block">▾</motion.span>
+          <motion.span animate={{ rotate: buka ? 180 : 0 }} className="inline-block">
+            <Ikon as={ChevronDown} size={14} />
+          </motion.span>
         </td>
       </tr>
       <AnimatePresence>
@@ -155,8 +179,9 @@ function BarisReferensi({ r, warna, fav, onFav, note, onNote }) {
                     : "tidak terdeteksi (bukan berarti buruk)"}
                 </div>
                 {r.duplikat && (
-                  <div className="text-amber">
-                    ↺ Sudah pernah diambil di pencarian: <b>{r.duplikat.topik}</b>
+                  <div className="inline-flex items-center gap-1.5 text-amber">
+                    <Ikon as={RotateCcw} size={13} />
+                    Sudah pernah diambil di pencarian: <b>{r.duplikat.topik}</b>
                   </div>
                 )}
                 {r.ringkasan && (
@@ -198,7 +223,7 @@ function PanduanImpor() {
   return (
     <Card className="mt-8">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
-        <SectionTitle color="text-indigo">📌 Cara Masuk ke Reference Manager</SectionTitle>
+        <JudulBagian ikon={BookOpen}>Cara Masuk ke Reference Manager</JudulBagian>
         <div className="inline-flex rounded-xl bg-bg/60 border border-line/60 p-1">
           {[["mendeley", "Mendeley"], ["zotero", "Zotero"]].map(([val, label]) => (
             <button
@@ -322,7 +347,7 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      setPesan(`⚠️ Ekspor gagal: ${e.message}`);
+      setPesan(`Ekspor gagal: ${e.message}`);
     }
   }
 
@@ -339,7 +364,7 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
       const m = e.message === "Not Found"
         ? "Fitur ini belum ada di server yang berjalan — restart server Python (server.py) lalu coba lagi."
         : e.message;
-      setPesan(`⚠️ ${m}`);
+      setPesan(m);
     } finally {
       setNotionVerifSibuk(false);
     }
@@ -354,9 +379,9 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
       localStorage.setItem("referensia-notion-token", notionToken.trim());
       localStorage.setItem("referensia-notion-page", notionPage.trim());
       setNotionUrl(d.url || "");
-      setPesan("✅ Halaman Notion dibuat berisi matriks literatur + daftar pustaka APA.");
+      setPesan("Halaman Notion dibuat berisi matriks literatur + daftar pustaka APA.");
     } catch (e) {
-      setPesan(`⚠️ ${e.message}`);
+      setPesan(e.message);
     } finally {
       setNotionSibuk(false);
     }
@@ -367,9 +392,9 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
     setPesan("");
     try {
       const d = await kirimZotero(src);
-      setPesan(`✅ ${d.jumlah} referensi terkirim ke Zotero. Cek aplikasi Zotero-mu.`);
+      setPesan(`${d.jumlah} referensi terkirim ke Zotero. Cek aplikasi Zotero-mu.`);
     } catch (e) {
-      setPesan(`⚠️ ${e.message}`);
+      setPesan(e.message);
     } finally {
       setZoteroSibuk(false);
     }
@@ -379,9 +404,9 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
     setPesan("");
     try {
       await bukaFolder(src);
-      setPesan("📂 Folder hasil dibuka di Explorer — seret PDF ke Mendeley, atau impor file RIS.");
+      setPesan("Folder hasil dibuka di Explorer — seret PDF ke Mendeley, atau impor file RIS.");
     } catch (e) {
-      setPesan(`⚠️ ${e.message}`);
+      setPesan(e.message);
     }
   }
 
@@ -400,8 +425,9 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
         <h1 className="font-display text-3xl font-semibold text-teks mt-2 leading-snug">
           {result.topik}
         </h1>
-        <p className="text-sm text-abu mt-2">
-          🇮🇩 {result.topik_id} · 🌍 {result.topik_en}
+        <p className="text-sm text-abu mt-2 inline-flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="inline-flex items-center gap-1.5"><Ikon as={Flag} size={13} />{result.topik_id}</span>
+          <span className="inline-flex items-center gap-1.5"><Ikon as={Globe2} size={13} />{result.topik_en}</span>
         </p>
       </div>
 
@@ -410,10 +436,12 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
           semuaPas ? "border-emerald-500/60 bg-emerald-500/5" : "border-amber-500/60 bg-amber-500/5"
         }`}
       >
-        <div className="text-xl font-black mb-4">
-          {semuaPas
-            ? "✅ JUMLAH REFERENSI PAS SESUAI PERMINTAAN"
-            : "⚠️ ADA KATEGORI YANG BELUM PAS — LIHAT CATATAN"}
+        <div className="inline-flex items-center gap-2 text-xl font-black mb-4">
+          {semuaPas ? (
+            <><Ikon as={CheckCircle2} size={22} className="text-emerald-500" />JUMLAH REFERENSI PAS SESUAI PERMINTAAN</>
+          ) : (
+            <><Ikon as={TriangleAlert} size={22} className="text-amber-500" />ADA KATEGORI YANG BELUM PAS — LIHAT CATATAN</>
+          )}
         </div>
         <div className="flex gap-4 justify-center flex-wrap">
           {Object.entries(result.target).filter(([, t]) => t > 0).map(([kat, t]) => {
@@ -421,9 +449,18 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
             const warna = kat === "Nasional" ? "text-indigo border-indigo" : "text-amber border-amber";
             return (
               <div key={kat} className={`bg-panel border-2 rounded-2xl px-8 py-4 ${warna.split(" ")[1]}`}>
-                <div className="text-sm text-abu">{kat === "Nasional" ? "🇮🇩" : "🌍"} {kat.toUpperCase()}</div>
+                <div className="inline-flex items-center gap-1.5 text-sm text-abu">
+                  <Ikon as={kat === "Nasional" ? Flag : Globe2} size={13} />
+                  {kat.toUpperCase()}
+                </div>
                 <div className={`text-4xl font-black ${warna.split(" ")[0]}`}>{n}/{t}</div>
-                <div className="text-sm">{n === t ? "✅ PAS" : "⚠️ KURANG"}</div>
+                <div className="inline-flex items-center gap-1.5 text-sm">
+                  {n === t ? (
+                    <><Ikon as={CheckCircle2} size={14} className="text-emerald-500" />PAS</>
+                  ) : (
+                    <><Ikon as={TriangleAlert} size={14} className="text-amber-500" />KURANG</>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -447,12 +484,13 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
       {result.prisma && (
         <Card className="mt-5">
           <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
-            <SectionTitle color="text-indigo">🔎 Alur seleksi literatur (PRISMA)</SectionTitle>
+            <JudulBagian ikon={Search}>Alur seleksi literatur (PRISMA)</JudulBagian>
             <button
               onClick={() => unduhEkspor("laporan_docx", "Referensia_laporan_tinjauan.docx")}
-              className={btnCls}
+              className={`${btnCls} inline-flex items-center justify-center gap-2`}
             >
-              📄 Laporan tinjauan (Word)
+              <Ikon as={FileText} size={14} />
+              Laporan tinjauan (Word)
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -486,37 +524,75 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
       <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <a
           href={zipHref}
-          className="gradient-btn flex-1 text-center rounded-2xl py-4 text-lg font-black text-white shadow-lg shadow-indigo/20"
+          className="gradient-btn flex-1 inline-flex items-center justify-center gap-2.5 text-center rounded-2xl py-4 text-lg font-black text-white shadow-lg shadow-indigo/20"
         >
-          📦 Unduh ZIP (siap Mendeley & Zotero)
+          <Ikon as={Download} size={20} />
+          Unduh ZIP (siap Mendeley & Zotero)
         </a>
         <button
           onClick={onReset}
-          className="sm:w-56 rounded-2xl py-4 font-bold border border-line text-abu hover:text-teks hover:border-indigo transition-colors"
+          className="sm:w-56 inline-flex items-center justify-center gap-2 rounded-2xl py-4 font-bold border border-line text-abu hover:text-teks hover:border-indigo transition-colors"
         >
-          🔎 Cari Topik Lain
+          <Ikon as={Search} size={17} />
+          Cari Topik Lain
         </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-        <button onClick={keZotero} disabled={zoteroSibuk} className={`${btnCls} disabled:opacity-50`}>
-          {zoteroSibuk ? "Mengirim…" : "⚡ Kirim ke Zotero"}
+        <button onClick={keZotero} disabled={zoteroSibuk} className={`${btnCls} inline-flex items-center justify-center gap-2 disabled:opacity-50`}>
+          {!zoteroSibuk && <Ikon as={Zap} size={14} />}
+          {zoteroSibuk ? "Mengirim…" : "Kirim ke Zotero"}
         </button>
-        <button onClick={() => setNotionBuka(!notionBuka)} className={btnCls}>🔗 Kirim ke Notion</button>
-        <button onClick={onAnalisis} className={btnCls}>📈 Analisis lanjut (tren · sitasi · AI)</button>
-        <button onClick={keFolder} className={btnCls}>📂 Buka folder hasil</button>
-        <button onClick={() => unduhEkspor("matriks_xlsx", "Referensia_matriks.xlsx")} className={btnCls}>📊 Matriks literatur (Excel)</button>
-        <button onClick={() => unduhEkspor("matriks_docx", "Referensia_matriks.docx")} className={btnCls}>📄 Matriks literatur (Word · Notion)</button>
-        <button onClick={() => unduhEkspor("laporan_docx", "Referensia_laporan_tinjauan.docx")} className={btnCls}>📄 Laporan tinjauan (Word · Bab 2)</button>
-        <button onClick={() => unduhEkspor("markdown", "Referensia.md")} className={btnCls}>📝 Markdown (Obsidian)</button>
-        <button onClick={() => unduhEkspor("apa_docx", "Referensia_APA.docx")} className={btnCls}>📄 Daftar pustaka APA (Word)</button>
-        <button onClick={() => unduhEkspor("ieee_docx", "Referensia_IEEE.docx")} className={btnCls}>📄 Daftar pustaka IEEE (Word)</button>
-        <button onClick={() => unduhEkspor("ris", "Referensia.ris")} className={btnCls}>🗂️ File RIS saja</button>
+        <button onClick={() => setNotionBuka(!notionBuka)} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={Link2} size={14} />
+          Kirim ke Notion
+        </button>
+        <button onClick={onAnalisis} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={TrendingUp} size={14} />
+          Analisis lanjut (tren · sitasi · AI)
+        </button>
+        <button onClick={keFolder} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FolderOpen} size={14} />
+          Buka folder hasil
+        </button>
+        <button onClick={() => unduhEkspor("matriks_xlsx", "Referensia_matriks.xlsx")} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FileSpreadsheet} size={14} />
+          Matriks literatur (Excel)
+        </button>
+        <button onClick={() => unduhEkspor("matriks_docx", "Referensia_matriks.docx")} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FileText} size={14} />
+          Matriks literatur (Word · Notion)
+        </button>
+        <button onClick={() => unduhEkspor("laporan_docx", "Referensia_laporan_tinjauan.docx")} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FileText} size={14} />
+          Laporan tinjauan (Word · Bab 2)
+        </button>
+        <button onClick={() => unduhEkspor("markdown", "Referensia.md")} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FileCode2} size={14} />
+          Markdown (Obsidian)
+        </button>
+        <button onClick={() => unduhEkspor("apa_docx", "Referensia_APA.docx")} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FileText} size={14} />
+          Daftar pustaka APA (Word)
+        </button>
+        <button onClick={() => unduhEkspor("ieee_docx", "Referensia_IEEE.docx")} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FileText} size={14} />
+          Daftar pustaka IEEE (Word)
+        </button>
+        <button onClick={() => unduhEkspor("ris", "Referensia.ris")} className={`${btnCls} inline-flex items-center justify-center gap-2`}>
+          <Ikon as={FileArchive} size={14} />
+          File RIS saja
+        </button>
       </div>
 
       {notionBuka && (
         <Card className="mt-3">
-          <SectionTitle color="text-indigo">🔗 Kirim langsung ke Notion</SectionTitle>
+          <SectionTitle color="text-indigo">
+            <span className="inline-flex items-center gap-2">
+              <Ikon as={Link2} size={15} />
+              Kirim langsung ke Notion
+            </span>
+          </SectionTitle>
           <p className="text-[12.5px] text-abu mb-3 leading-relaxed">
             Sekali saja per akun Notion: buat integration → hubungkan → pilih halaman. Token dan halaman
             tersimpan di perangkat ini, jadi pencarian berikutnya tinggal klik{" "}
@@ -556,7 +632,11 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
           </div>
           {notionCek && (
             <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-[12.5px] leading-relaxed">
-              <span className="font-bold text-emerald-500">✅ Terhubung</span> ke workspace{" "}
+              <span className="inline-flex items-center gap-1.5 font-bold text-emerald-500">
+                <Ikon as={CheckCircle2} size={14} />
+                Terhubung
+              </span>{" "}
+              ke workspace{" "}
               <b className="text-teks">{notionCek.ruang || "(tanpa nama)"}</b>
               {notionCek.bot ? <> sebagai <b className="text-teks">{notionCek.bot}</b></> : null}
               {" · "}{notionCek.halaman.length} halaman sudah dibagikan.
@@ -587,8 +667,9 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
               {notionSibuk ? "Mengirim…" : "Langkah 3 · Kirim ke Notion"}
             </button>
             {notionUrl && (
-              <a href={notionUrl} target="_blank" rel="noreferrer" className="text-[12.5px] font-bold text-indigo hover:underline">
-                Buka halaman Notion →
+              <a href={notionUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[12.5px] font-bold text-indigo hover:underline">
+                Buka halaman Notion
+                <Ikon as={ArrowRight} size={13} />
               </a>
             )}
             <span className="text-[11.5px] text-abu">
@@ -602,8 +683,10 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
         <SalinBtn teks={semua.map((r) => r.apa).filter(Boolean).join("\n\n")}>semua APA</SalinBtn>
         <SalinBtn teks={semua.map((r) => r.ieee).filter(Boolean).join("\n")}>semua IEEE</SalinBtn>
       </div>
-      <p className="text-center text-[12px] text-abu mt-2">
-        Rentang tahun hasil: {rentang} · ★ = favorit ({fav.size})
+      <p className="text-center text-[12px] text-abu mt-2 inline-flex w-full items-center justify-center gap-1.5">
+        Rentang tahun hasil: {rentang} ·
+        <Ikon as={Star} size={12} className="fill-current text-amber" />
+        = favorit ({fav.size})
       </p>
       {pesan && (
         <div className="mt-3 border border-indigo/40 bg-indigo/10 text-teks/90 rounded-xl px-4 py-3 text-sm text-center">
@@ -613,7 +696,7 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
 
       {result.catatan?.length > 0 && (
         <Card className="mt-6 border-amber-500/40">
-          <SectionTitle color="text-amber-400">📝 Catatan</SectionTitle>
+          <JudulBagian ikon={NotebookPen} color="text-amber-400">Catatan</JudulBagian>
           <ul className="text-sm text-abu space-y-1 list-disc pl-5">
             {result.catatan.map((c, i) => <li key={i}>{c}</li>)}
           </ul>
@@ -627,8 +710,9 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
         const teratas = [...rows].sort((a, b) => (b.sitasi || 0) - (a.sitasi || 0)).slice(0, 3);
         return (
           <div key={kat} className="mt-8">
-            <h2 className={`text-xl font-black mb-3 ${warna}`}>
-              {kat === "Nasional" ? "🇮🇩" : "🌍"} Referensi {kat} ({rows.length})
+            <h2 className={`text-xl font-black mb-3 ${warna} inline-flex items-center gap-2`}>
+              <Ikon as={kat === "Nasional" ? Flag : Globe2} size={18} />
+              Referensi {kat} ({rows.length})
             </h2>
 
             <Card className={`mb-4 ${border}`}>
@@ -673,7 +757,11 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
                 </tbody>
               </table>
             </Card>
-            <p className="text-[12px] text-abu mt-2">Klik baris untuk melihat abstrak & detail · klik ☆ untuk menandai favorit.</p>
+            <p className="text-[12px] text-abu mt-2 inline-flex items-center gap-1.5">
+              Klik baris untuk melihat abstrak & detail · klik
+              <Ikon as={Star} size={12} />
+              untuk menandai favorit.
+            </p>
           </div>
         );
       })}
@@ -686,9 +774,12 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
             Versi Excel bisa diunduh lewat tombol di atas.
           </p>
           {tanpaAbstrak > 0 && (
-            <div className="border border-amber/40 bg-amber/10 text-teks/80 rounded-xl px-4 py-3 text-[12.5px] mb-3">
-              ⚠️ {tanpaAbstrak} dari {semua.length} referensi tidak menyediakan abstrak (dan tidak ditemukan di
-              Semantic Scholar), jadi ringkasan/hasil utamanya bisa kosong. Metode tetap dideteksi dari judul.
+            <div className="flex items-start gap-2 border border-amber/40 bg-amber/10 text-teks/80 rounded-xl px-4 py-3 text-[12.5px] mb-3">
+              <Ikon as={TriangleAlert} size={15} className="mt-0.5 text-amber" />
+              <span>
+                {tanpaAbstrak} dari {semua.length} referensi tidak menyediakan abstrak (dan tidak ditemukan di
+                Semantic Scholar), jadi ringkasan/hasil utamanya bisa kosong. Metode tetap dideteksi dari judul.
+              </span>
             </div>
           )}
           <Card className="p-0 overflow-x-auto">
@@ -727,7 +818,7 @@ export default function ResultView({ result, src, libId, initialFav = [], initia
       <div className="mt-8 rounded-2xl p-8 text-center text-white font-black text-2xl leading-snug bg-gradient-to-br from-indigodeep to-indigo shadow-lg shadow-indigo/25">
         MASUKKAN FILE DALAM ZIP KE MENDELEY / ZOTERO
         <div className="text-base font-bold mt-2 opacity-90">
-          TERIMA KASIH SUDAH MEMAKAI REFERENSIA 💜
+          TERIMA KASIH SUDAH MEMAKAI REFERENSIA
         </div>
       </div>
     </motion.div>

@@ -39,7 +39,6 @@ except ImportError:
 WARNA = {"bg": "#0E0F1F", "panel": "#171831", "pink": "#818CF8", "violet": "#FBBF24",
          "teks": "#F1F0FF", "abu": "#9C9BC4"}
 WARNA_KAT = {"Nasional": "#818CF8", "Internasional": "#FBBF24"}
-IKON_KAT = {"Nasional": "🇮🇩", "Internasional": "🌍"}
 WIB = datetime.timezone(datetime.timedelta(hours=7))
 MAKS_BYTE_PDF = 80 * 1024 * 1024
 
@@ -59,8 +58,10 @@ def _emit(kind, **data):
         except Exception:
             pass
 
+_EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F\u2190-\u21FF]+\s?")
+
 class _LogTee:
-    """Teruskan print() mesin sebagai event log ke UI, tetap tulis ke stdout asli."""
+    """Teruskan print() mesin sebagai event log ke UI (tanpa emoji), tetap tulis ke stdout asli."""
     def __init__(self, asli):
         self.asli, self.buf = asli, ""
     def write(self, t):
@@ -69,7 +70,8 @@ class _LogTee:
         while "\n" in self.buf:
             baris, self.buf = self.buf.split("\n", 1)
             if baris.strip():
-                _emit("log", text=baris.rstrip())
+                tone = "warn" if "⚠" in baris else ("ok" if "✓" in baris else "")
+                _emit("log", text=_EMOJI.sub("", baris).rstrip(), tone=tone)
     def flush(self):
         self.asli.flush()
     def __getattr__(self, nama):
@@ -315,7 +317,7 @@ class Konteks:
 
     def matikan_openalex(self, kode):
         if not self.openalex_mati:
-            print(f"   ⚠️ OpenAlex berhenti merespons (kode {kode}) — kemungkinan kuota gratis jaringan Colab habis.")
+            print(f"   OpenAlex berhenti merespons (kode {kode}) — kemungkinan kuota gratis OpenAlex habis.")
             print("      Mesin lanjut lewat Crossref. Agar lebih stabil, isi openalex_api_key (gratis di openalex.org/settings/api).")
         self.openalex_mati = True
 
@@ -398,7 +400,7 @@ def crossref_tarik(ctx, query, maks=200, offset=0, longgar_tahun=False):
         r.raise_for_status()
         return [rapikan_crossref(it) for it in r.json()["message"]["items"]]
     except Exception as e:
-        print(f"   ⚠️ Crossref gagal ({e})")
+        print(f"   Crossref gagal ({e})")
         return []
 
 
@@ -570,7 +572,7 @@ def cek_kualitas(ctx, recs):
         r.setdefault("sinta", "")
     if not ctx.cek_indeks or not recs:
         return
-    print("   🛡️ Memeriksa indeks DOAJ & akreditasi SINTA …")
+    print("   Memeriksa indeks DOAJ & akreditasi SINTA …")
     cek_doaj(ctx, recs)
     cek_sinta(ctx, recs)
     for r in recs:
@@ -579,7 +581,7 @@ def cek_kualitas(ctx, recs):
             r["skor"] = min(100.0, round(r["skor"] + bonus, 1))
     n_doaj = sum(1 for r in recs if r["doaj"])
     n_sinta = sum(1 for r in recs if r["sinta"])
-    print(f"      ✓ Terindeks DOAJ: {n_doaj} · Terakreditasi SINTA: {n_sinta} (bonus skor diterapkan)")
+    print(f"      Terindeks DOAJ: {n_doaj} · Terakreditasi SINTA: {n_sinta} (bonus skor diterapkan)")
 
 
 def analisis_relevansi(topik, recs):
@@ -655,7 +657,7 @@ AMBANG = [  # makin ke bawah makin longgar (dipakai bila kuota belum terpenuhi)
 ]
 
 def label_relevansi(s):
-    return "🔥 Sangat relevan" if s >= 65 else ("✅ Relevan" if s >= 45 else "🟡 Pendukung")
+    return "Sangat relevan" if s >= 65 else ("Relevan" if s >= 45 else "Pendukung")
 
 
 # ============================ open access & unduh PDF ============================
@@ -840,7 +842,7 @@ def dork_cari(ctx, q, maks=15):
     time.sleep(1.0)
     if len(ctx.mesin_mati) >= 2 and not ctx.dork_diumumkan:
         ctx.dork_diumumkan = True
-        print("      ⚠️ Mesin dorks sedang membatasi koneksi Colab ini — dorks dilewati, sumber lain tetap jalan.")
+        print("      Mesin dorks sedang membatasi koneksi ini — dorks dilewati, sumber lain tetap jalan.")
     return hasil[:maks]
 
 def teks_pdf(isi, halaman=2):
@@ -1002,7 +1004,7 @@ def isi_kuota(kat, pool, target, terpilih, ambang, ctx):
         for r in ambil:
             terpilih.append(r)
             ctx.dipilih_uid.add(r["uid"])
-        print(f"      … {IKON_KAT[kat]} {kat}: {len(terpilih)}/{target}")
+        print(f"      … {kat}: {len(terpilih)}/{target}")
 
 def tambah_ke_pool(pool, recs, ctx=None):
     baru = 0
@@ -1099,7 +1101,7 @@ def cari_kategori(kat, target, ctx):
         boleh = set(JENIS_OPENALEX.get(ctx.jenis, JENIS_OPENALEX["Semua"]).split("|"))
         recs = [r for r in recs if r["jenis"] in boleh and dalam_rentang(r["tahun"], ctx)]
         isi_negara(ctx, recs)
-        print(f"      🔎 Google Dorks: {len(urls)} PDF ditemukan, {len(recs)} lolos cek metadata")
+        print(f"      Google Dorks: {len(urls)} PDF ditemukan, {len(recs)} lolos cek metadata")
         return recs
 
     tahapan = [  # (nama, fungsi pencarian, tingkat ambang, catatan jika dipakai)
@@ -1131,7 +1133,7 @@ def cari_kategori(kat, target, ctx):
     for nama, fungsi, ambang, label in tahapan:
         if len(terpilih) >= target:
             break
-        print(f"   ↳ {IKON_KAT[kat]} {nama} …")
+        print(f"   → {nama} …")
         sebelum = len(terpilih)
         baru = tambah_ke_pool(pool, fungsi(), ctx)
         if baru or ambang:
@@ -1141,7 +1143,7 @@ def cari_kategori(kat, target, ctx):
             catatan.append(f"{len(terpilih) - sebelum} referensi {kat.lower()} {label}")
 
     if len(terpilih) < target and ctx.wajib_pdf and ctx.longgarkan:
-        print(f"   ↳ {IKON_KAT[kat]} PDF legal tidak cukup → melengkapi dengan referensi tanpa PDF agar jumlah pas …")
+        print(f"   → PDF legal {kat} tidak cukup, melengkapi dengan referensi tanpa PDF agar jumlah pas …")
         ctx.wajib_pdf, simpan = False, ctx.wajib_pdf
         sebelum = len(terpilih)
         isi_kuota(kat, pool, target, terpilih, 2, ctx)
@@ -1605,7 +1607,7 @@ def buat_markdown(result, catatan=None):
         rows = result["hasil"].get(kat) or []
         if not rows:
             continue
-        baris += [f"## {'🇮🇩' if kat == 'Nasional' else '🌍'} {kat} ({len(rows)})", "",
+        baris += [f"## {kat} ({len(rows)})", "",
                   "| No | Judul | Tahun | Metode | Hasil utama | Catatan | DOI |",
                   "| --- | --- | --- | --- | --- | --- | --- |"]
         for r in rows:
@@ -1679,7 +1681,7 @@ def tabel_html(rows, warna):
             f'<td style="{sel}">{r["tahun"] or "-"}</td><td style="{sel}">{NAMA_JENIS.get(r["jenis"], r["jenis"])}</td>'
             f'<td style="{sel};white-space:nowrap">{indeks}</td>'
             f'<td style="{sel};word-break:break-all;min-width:140px">{doi}</td>'
-            f'<td style="{sel}">{"✅" if r.get("pdf") else "—"}</td></tr>')
+            f'<td style="{sel}">{"Ya" if r.get("pdf") else "—"}</td></tr>')
     return (f'<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px;'
             f'color:{WARNA["teks"]}"><thead><tr>{kepala}</tr></thead><tbody>{"".join(isi)}</tbody></table></div>')
 
@@ -1870,7 +1872,7 @@ def blok_prisma_html(prisma):
         return ""
     per = prisma.get("per_kategori") or {}
     kepala = "".join(f"<th style='text-align:left;padding:6px 10px'>Tahap</th>")
-    kepala += "".join(f"<th style='padding:6px 10px'>🇮🇩 Nasional</th><th style='padding:6px 10px'>🌍 Internasional</th>"
+    kepala += "".join(f"<th style='padding:6px 10px'>Nasional</th><th style='padding:6px 10px'>Internasional</th>"
                       f"<th style='padding:6px 10px'>Total</th>")
     baris = ""
     for label, n, i_, total in _tabel_prisma({"prisma": prisma}):
@@ -1878,7 +1880,7 @@ def blok_prisma_html(prisma):
                   f"<td style='padding:6px 10px;text-align:center;border-top:1px solid #2C2E52'>{n}</td>"
                   f"<td style='padding:6px 10px;text-align:center;border-top:1px solid #2C2E52'>{i_}</td>"
                   f"<td style='padding:6px 10px;text-align:center;font-weight:700;border-top:1px solid #2C2E52'>{total}</td></tr>")
-    return (f"<h2>🔎 Alur Seleksi Literatur (PRISMA)</h2><div class='box'>"
+    return (f"<h2>Alur Seleksi Literatur (PRISMA)</h2><div class='box'>"
             f"<table style='border-collapse:collapse;width:100%;font-size:13px;color:{WARNA['teks']}'>"
             f"<thead><tr>{kepala}</tr></thead><tbody>{baris}</tbody></table>"
             f"<div class='meta' style='margin-top:8px'>Angka otomatis dari tahap pencarian mesin, bukan perkiraan. "
@@ -1893,7 +1895,7 @@ def blok_gap_html(analisis):
         f"<li style='margin:6px 0'>“{html.escape(g.get('teks', ''))}”<br>"
         f"<span class='meta'>— {html.escape(g.get('judul', ''))} ({g.get('tahun') or '—'})</span></li>"
         for g in gap)
-    return (f"<h2>🧭 Petunjuk Celah Penelitian</h2><div class='box'><ul style='margin:0;padding-left:18px'>"
+    return (f"<h2>Petunjuk Celah Penelitian</h2><div class='box'><ul style='margin:0;padding-left:18px'>"
             f"{item}</ul></div>")
 
 
@@ -1923,7 +1925,7 @@ def laporan_html(ctx, hasil, kunci_kat, tema_kat, ringkasan, gambar, prisma=None
                 f'<b>IEEE:</b> {html.escape(r.get("ieee", "-"))}</div></div>')
         chips_k = "".join(f'<span class="chip">{html.escape(k)}</span>' for k in kunci_kat.get(kat, []))
         chips_t = "".join(f'<span class="chip">{html.escape(t)}</span>' for t in tema_kat.get(kat, [])) or "-"
-        bagian.append(f'<h2 style="color:{WARNA_KAT[kat]}">{IKON_KAT[kat]} Referensi {kat} ({len(hasil[kat])})</h2>'
+        bagian.append(f'<h2 style="color:{WARNA_KAT[kat]}">Referensi {kat} ({len(hasil[kat])})</h2>'
                       f'<div class="box"><b>Kata kunci:</b><br>{chips_k}<br><br><b>Tema yang sering muncul:</b><br>{chips_t}</div>'
                       + "".join(daftar))
     return f"""<!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
@@ -1939,7 +1941,7 @@ a{{color:{WARNA['violet']};word-break:break-all}} .chip{{display:inline-block;ba
 <div class="box">{img}</div>{blok_prisma_html(prisma)}{blok_gap_html(analisis)}{"".join(bagian)}
 <div class="meta" style="text-align:center;margin:24px 0">Skor = kemiripan isi (TF-IDF) 40% + cakupan kata kunci & frasa 30% + peringkat mesin pencari 17% + sitasi 8% + kebaruan 5%.<br>
 Nasional = jurnal/penerbit/repositori Indonesia · Internasional = jurnal/penerbit luar Indonesia.<br>
-Terima kasih sudah memakai Referensia 💜</div></div></body></html>"""
+Terima kasih sudah memakai Referensia</div></div></body></html>"""
 
 
 # ============================ program utama ============================
@@ -1995,15 +1997,15 @@ def _jalankan(judul_topik, jumlah_nasional, jumlah_internasional, jenis_referens
     folder_pdf = os.path.join(folder, "PDF")
     os.makedirs(folder_pdf, exist_ok=True)
 
-    judul_besar("Referensia 🔎", f"Topik: {html.escape(topik)}<br>Target: 🇮🇩 {target['Nasional']} Nasional · "
-                               f"🌍 {target['Internasional']} Internasional — harus PAS<br>📅 {teks_rentang}")
-    print("🌐 [1/4] Menyiapkan kata kunci nasional & internasional …")
+    judul_besar("Referensia", f"Topik: {html.escape(topik)}<br>Target: {target['Nasional']} Nasional · "
+                              f"{target['Internasional']} Internasional — harus PAS<br>{teks_rentang}")
+    print("[1/4] Menyiapkan kata kunci nasional & internasional …")
     topik_id, topik_en, topik_en_skor = siapkan_topik(topik, judul_topik_inggris)
-    print(f"   🇮🇩 Nasional      : {topik_id}")
-    print(f"   🌍 Internasional : {topik_en}")
-    print(f"   📅 Rentang tahun : {teks_rentang}")
+    print(f"   Nasional      : {topik_id}")
+    print(f"   Internasional : {topik_en}")
+    print(f"   Rentang tahun : {teks_rentang}")
     if pakai_google_dorks:
-        print("   🔎 Google Dorks   : aktif (filetype:pdf, situs bajakan otomatis dilewati)")
+        print("   Google Dorks   : aktif (filetype:pdf, situs bajakan otomatis dilewati)")
 
     nama_dipakai = set()
     def nama_unik(nm):
@@ -2025,13 +2027,13 @@ def _jalankan(judul_topik, jumlah_nasional, jumlah_internasional, jenis_referens
                   gagal_pdf={"Nasional": set(), "Internasional": set()},
                   pindahan={"Nasional": [], "Internasional": []}, dipilih_uid=set())
 
-    print("🔎 [2/4] Mencari, menganalisis & mengunduh sampai jumlahnya PAS …")
+    print("[2/4] Mencari, menganalisis & mengunduh sampai jumlahnya PAS …")
     hasil, pool_kat, catatan, kunci_kat = {}, {}, [], {}
     for kat in ("Nasional", "Internasional"):
         if target[kat] <= 0:
             hasil[kat] = []
             continue
-        print(f" {IKON_KAT[kat]} {kat.upper()} — target {target[kat]}")
+        print(f" {kat.upper()} — target {target[kat]}")
         rows, pool, cat = cari_kategori(kat, target[kat], ctx)
         hasil[kat], pool_kat[kat] = rows, pool
         catatan += cat
@@ -2040,11 +2042,11 @@ def _jalankan(judul_topik, jumlah_nasional, jumlah_internasional, jenis_referens
             catatan.append(f"{kat}: hanya ditemukan {len(rows)} dari {target[kat]} meski semua tahap pencarian sudah "
                            f"dijalankan. Coba topik yang lebih umum, perlebar rentang tahun, atau aktifkan pelonggaran.")
     if ctx.saring_predator and ctx.predator_disaring:
-        print(f"   🛡️ Filter predator: {ctx.predator_disaring} kandidat dari penerbit terindikasi predator disaring")
+        print(f"   Filter predator: {ctx.predator_disaring} kandidat dari penerbit terindikasi predator disaring")
 
     # PDF terbaik-usaha bila PDF tidak diwajibkan
     if not ctx.wajib_pdf:
-        print("📥 Mengunduh PDF legal yang tersedia …")
+        print("Mengunduh PDF legal yang tersedia …")
         semua = [r for kat in hasil for r in hasil[kat]]
         for r in semua:
             r["nama_file"] = r.get("nama_file") or nama_unik(nama_file_pdf(r))
@@ -2075,10 +2077,10 @@ def _jalankan(judul_topik, jumlah_nasional, jumlah_internasional, jenis_referens
             if not os.listdir(d):
                 os.rmdir(d)
 
-    print("📊 [3/4] Menyusun hasil analisis …")
+    print("[3/4] Menyusun hasil analisis …")
     n_abstrak = lengkapi_abstrak_s2([r for kat in hasil for r in hasil[kat]])
     if n_abstrak:
-        print(f"   📚 Abstrak dilengkapi dari Semantic Scholar: {n_abstrak} referensi")
+        print(f"   Abstrak dilengkapi dari Semantic Scholar: {n_abstrak} referensi")
     no_global = 0
     for kat in ("Nasional", "Internasional"):
         for r in hasil[kat]:
@@ -2088,7 +2090,7 @@ def _jalankan(judul_topik, jumlah_nasional, jumlah_internasional, jenis_referens
             r["apa"] = buat_apa(r)
             no_global += 1
             r["ieee"] = buat_ieee(r, no_global)
-    print(f"   ✍️ Ringkasan, tabel metode & sitasi APA/IEEE disusun untuk {no_global} referensi")
+    print(f"   Ringkasan, tabel metode & sitasi APA/IEEE disusun untuk {no_global} referensi")
     semua_pas = kartu_verifikasi(hasil, target)
     semua = [r for kat in ("Nasional", "Internasional") for r in hasil[kat]]
     if not semua:
@@ -2096,9 +2098,9 @@ def _jalankan(judul_topik, jumlah_nasional, jumlah_internasional, jenis_referens
         return None
     n_pdf = sum(1 for r in semua if r.get("pdf"))
     tahun_ada = [r["tahun"] for r in semua if r["tahun"]]
-    ringkasan = (f"Target: 🇮🇩 {target['Nasional']} Nasional · 🌍 {target['Internasional']} Internasional · "
-                 f"📅 {teks_rentang}<br>"
-                 f"Didapat: 🇮🇩 <b>{len(hasil['Nasional'])}</b> · 🌍 <b>{len(hasil['Internasional'])}</b> · "
+    ringkasan = (f"Target: {target['Nasional']} Nasional · {target['Internasional']} Internasional · "
+                 f"{teks_rentang}<br>"
+                 f"Didapat: <b>{len(hasil['Nasional'])}</b> Nasional · <b>{len(hasil['Internasional'])}</b> Internasional · "
                  f"PDF legal: <b>{n_pdf}/{len(semua)}</b><br>Kandidat dianalisis: <b>"
                  f"{sum(len(p) for p in pool_kat.values())}</b> · Rentang tahun: <b>"
                  f"{(str(min(tahun_ada)) + '–' + str(max(tahun_ada))) if tahun_ada else '-'}</b> · Rata-rata skor: "
@@ -2123,10 +2125,10 @@ def _jalankan(judul_topik, jumlah_nasional, jumlah_internasional, jenis_referens
     prisma = buat_prisma(hasil, pool_kat, ctx.stat)
     analisis = statistik_tren({"hasil": hasil, "kunci_kat": kunci_kat})
     if prisma["ditarik"]:
-        print(f"   🔎 PRISMA: {prisma['ditarik']} record ditemukan · {prisma['duplikat']} duplikat · "
+        print(f"   PRISMA: {prisma['ditarik']} record ditemukan · {prisma['duplikat']} duplikat · "
               f"{prisma['predator']} predator disaring · {prisma['masuk']} masuk")
 
-    print("📦 [4/4] Membuat file Mendeley & ZIP …")
+    print("[4/4] Membuat file Mendeley & ZIP …")
     with open(os.path.join(folder, "01_IMPOR_REFERENSI.ris"), "w", encoding="utf-8") as f:
         f.write(buat_ris(semua, topik))
     with open(os.path.join(folder, "referensi.bib"), "w", encoding="utf-8") as f:
@@ -2215,7 +2217,7 @@ TERIMA KASIH SUDAH MEMAKAI REFERENSIA
                 p = os.path.join(dasar, fn)
                 z.write(p, os.path.relpath(p, akar))
     ukuran = os.path.getsize(zip_path) / 1024 / 1024
-    print(f"   ✓ ZIP siap: {os.path.basename(zip_path)} ({ukuran:.1f} MB) — selesai dalam {time.time() - mulai:.0f} detik")
+    print(f"   ZIP siap: {os.path.basename(zip_path)} ({ukuran:.1f} MB) — selesai dalam {time.time() - mulai:.0f} detik")
 
     banner_penutup()
     _emit("done", zip_path=zip_path)

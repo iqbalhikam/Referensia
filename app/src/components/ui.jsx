@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Ikon, Check, Copy } from "./icons.jsx";
 
 export function salinTeks(t) {
   if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(t);
@@ -18,9 +19,10 @@ export function SalinBtn({ teks, children }) {
     <button
       type="button"
       onClick={() => salinTeks(teks).then(() => { setOk(true); setTimeout(() => setOk(false), 1500); })}
-      className="shrink-0 text-[11px] font-bold border border-line rounded-lg px-2.5 py-1 text-abu hover:text-indigo hover:border-indigo/50 transition-colors"
+      className="inline-flex items-center gap-1.5 shrink-0 text-[11px] font-bold border border-line rounded-lg px-2.5 py-1 text-abu hover:text-indigo hover:border-indigo/50 transition-colors"
     >
-      {ok ? "✓ tersalin" : `Salin ${children}`}
+      <Ikon as={ok ? Check : Copy} size={12} />
+      {ok ? "tersalin" : `Salin ${children}`}
     </button>
   );
 }

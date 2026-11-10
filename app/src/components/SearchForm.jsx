@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, Label, Toggle, Field, inputCls, IconCheck, IconSearch, IconArrow } from "./ui.jsx";
+import { Ikon, ChevronDown } from "./icons.jsx";
 
 const JENIS = ["Semua", "Artikel Jurnal", "Buku / Bab Buku", "Skripsi / Tesis / Disertasi"];
 
@@ -270,7 +271,9 @@ export default function SearchForm({ onSubmit, error }) {
               className="w-full flex items-center justify-between px-6 py-4 text-[13px] font-medium text-abu hover:text-teks transition-colors"
             >
               <span>Opsi lanjutan</span>
-              <motion.span animate={{ rotate: opsiLanjut ? 180 : 0 }} className="text-[11px]">▼</motion.span>
+              <motion.span animate={{ rotate: opsiLanjut ? 180 : 0 }} className="text-abu">
+                <Ikon as={ChevronDown} size={15} />
+              </motion.span>
             </button>
             <AnimatePresence>
               {opsiLanjut && (

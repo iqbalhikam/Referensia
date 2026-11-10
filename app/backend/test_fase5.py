@@ -120,8 +120,8 @@ class TestMarkdown(unittest.TestCase):
     def test_struktur_dan_tabel(self):
         md = engine.buat_markdown(self._result())
         self.assertIn("# Referensia — tes topik", md)
-        self.assertIn("## 🇮🇩 Nasional (1)", md)
-        self.assertIn("## 🌍 Internasional (1)", md)
+        self.assertIn("## Nasional (1)", md)
+        self.assertIn("## Internasional (1)", md)
         self.assertIn("| No | Judul | Tahun | Metode | Hasil utama | Catatan | DOI |", md)
         self.assertIn("[10.1234/tes.1](https://doi.org/10.1234/tes.1)", md)
         self.assertIn("### Sitasi APA — Nasional", md)

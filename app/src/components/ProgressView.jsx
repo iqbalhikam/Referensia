@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card } from "./ui.jsx";
 import { LoadingAnim } from "./Brand.jsx";
+import { Ikon, CheckCircle2, Flag, Globe2, Loader2, SearchX, TriangleAlert } from "./icons.jsx";
 
 function parseKuota(events) {
   const kuota = { Nasional: null, Internasional: null };
@@ -52,11 +53,14 @@ export default function ProgressView({ events, durasi, status, error }) {
       <div className="flex flex-col items-center gap-4 mb-6">
         {status === "running" && <LoadingAnim size={110} />}
         <div className="flex items-center gap-3">
-          <div className="text-lg font-extrabold">
+          <div className="inline-flex items-center gap-2 text-lg font-extrabold">
+            {status === "done" && <Ikon as={CheckCircle2} size={20} className="text-emerald-400" />}
+            {status === "empty" && <Ikon as={SearchX} size={20} className="text-abu" />}
+            {status === "error" && <Ikon as={TriangleAlert} size={20} className="text-amber-400" />}
             {status === "running" && (tahap || "Menyiapkan mesin…")}
-            {status === "done" && "✅ Selesai! Menyiapkan hasil…"}
-            {status === "empty" && "😔 Tidak ada referensi yang cocok"}
-            {status === "error" && "⚠️ Terjadi kesalahan"}
+            {status === "done" && "Selesai! Menyiapkan hasil…"}
+            {status === "empty" && "Tidak ada referensi yang cocok"}
+            {status === "error" && "Terjadi kesalahan"}
           </div>
           <span className="text-abu text-sm tabular-nums">
             {menit}:{String(detik).padStart(2, "0")}
@@ -68,16 +72,23 @@ export default function ProgressView({ events, durasi, status, error }) {
         {["Nasional", "Internasional"].map((kat) => {
           const k = kuota[kat];
           const warna = kat === "Nasional" ? "border-indigo text-indigo" : "border-amber text-amber";
-          const ikon = kat === "Nasional" ? "🇮🇩" : "🌍";
+          const IkonKat = kat === "Nasional" ? Flag : Globe2;
           const pas = k && k.n === k.target;
           return (
             <Card key={kat} className={`text-center border-2 ${warna.split(" ")[0]}`}>
-              <div className="text-sm text-abu">{ikon} {kat.toUpperCase()}</div>
+              <div className="inline-flex items-center gap-1.5 text-sm text-abu">
+                <Ikon as={IkonKat} size={14} />
+                {kat.toUpperCase()}
+              </div>
               <div className={`text-5xl font-black my-2 ${warna.split(" ")[1]}`}>
                 {k ? k.n : "–"}
                 <span className="text-2xl text-abu font-bold">/{k ? k.target : "?"}</span>
               </div>
-              <div className="text-sm">{k ? (pas ? "✅ PAS" : "⏳ mencari…") : "menunggu…"}</div>
+              <div className="inline-flex items-center gap-1.5 text-sm">
+                {!k && "menunggu…"}
+                {k && pas && <><Ikon as={CheckCircle2} size={15} className="text-emerald-400" />PAS</>}
+                {k && !pas && <><Ikon as={Loader2} size={15} className="animate-spin text-amber" />mencari…</>}
+              </div>
               {k && (
                 <div className="h-1.5 bg-line rounded-full mt-3 overflow-hidden">
                   <motion.div
@@ -102,14 +113,17 @@ export default function ProgressView({ events, durasi, status, error }) {
           Log mesin
         </div>
         <div ref={logRef} className="h-72 overflow-y-auto px-4 py-3 font-mono text-[12.5px] leading-relaxed bg-bg/60">
-          {logs.map((ev, i) => (
-            <div key={i} className="text-abu whitespace-pre-wrap break-words">
-              <span className="text-abu/40 select-none">{String(ev.t ?? 0).padStart(6)}s </span>
-              <span className={ev.text.includes("⚠️") ? "text-amber-400" : ev.text.startsWith("   ✓") ? "text-emerald-400" : ""}>
-                {ev.text}
-              </span>
-            </div>
-          ))}
+          {logs.map((ev, i) => {
+            const tone = ev.tone || (ev.text.startsWith("   ✓") ? "ok" : "");
+            return (
+              <div key={i} className="text-abu whitespace-pre-wrap break-words">
+                <span className="text-abu/40 select-none">{String(ev.t ?? 0).padStart(6)}s </span>
+                <span className={tone === "warn" ? "text-amber-400" : tone === "ok" ? "text-emerald-400" : ""}>
+                  {ev.text}
+                </span>
+              </div>
+            );
+          })}
           {status === "running" && (
             <motion.span animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="text-amber">
               ▌
